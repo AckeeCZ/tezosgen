@@ -1,41 +1,26 @@
 // Generated using ContractGen
 // swiftlint:disable file_length
 
-import ReactiveSwift
-import EtherKit
-import BigInt
-
 struct {{ contractName }}Box {
-    fileprivate let etherQuery: EtherQuerying
-    fileprivate let at: Address
+    fileprivate let tezosClient: TezosClient 
+    fileprivate let at: String
 
-    init(etherQuery: EtherQuerying, at: Address) {
-        self.etherQuery = etherQuery
-        self.at = at
+    init(tezosClient: TezosClient, at: String) {
+       self.tezosClient = tezosClient 
+       self.at = at 
     }
-    {% for function in functions %}
-    func {{ function.name }}<T: PrivateKeyType>({{ function.params }}) -> {% if function.isPayable %}PayableContractMethodInvocation<T>{% else %}ContractMethodInvocation<T>{% endif %} {
-        {% if function.isPayable %}let send: (_ using: T, _ amount: Wei) -> SignalProducer<Hash, EtherKitError> = { using, amount in{% else %}let send: (_ using: T) -> SignalProducer<Hash, EtherKitError> = { using in{% endif %}
-            return SignalProducer<Hash, EtherKitError> { observer, disposable in
-                let {{ function.name }}FunctionCall = Function(name: "{{ function.name }}", parameters: [{{ function.values }}] as [ABIType])
-                let {{ function.name }}Data = GeneralData(data: {{ function.name }}FunctionCall.encodeToCall())
-                self.etherQuery.send(using: using, to: self.at, value: {% if function.isPayable %}amount{% else %}Wei(0){% endif %}, data: {{ function.name }}Data, queue: DispatchQueue.global(qos: .default), completion: { result in
-                    switch result {
-                    case .success(let hash):
-                        observer.send(value: hash)
-                    case .failure(let error):
-                        observer.send(error: error)
-                        observer.sendCompleted()
-                    }
-                })
-            }
+    func call({{ function.params }}) -> ContractMethodInvocation {
+	let input: TezosPair<Bool, Bool> = TezosPair(first: param1, second: param2)
+        let send: (_ from: Wallet, _ amount: TezosBalance, _ completion: @escaping RPCCompletion<String>) -> Void = { from, amount, completion in
+            self.tezosClient.send(amount: amount, to: self.at, from: from, input: input, completion: completion)
         }
-        return {% if function.isPayable %}PayableContractMethodInvocation{% else %}ContractMethodInvocation{% endif %}(send: send)
+
+        return ContractMethodInvocation(send: send)
     }
 {% endfor %}}
 
-extension EtherQuery {
-    func {% filter lowerFirstLetter %}{{ contractName }}{% endfilter %}(at: Address) -> {{ contractName }}Box {
-        return {{ contractName }}Box(etherQuery: self, at: at)
+extension TezosClient {
+    func {% filter lowerFirstLetter %}{{ contractName }}{% endfilter %}(at: String) -> {{ contractName }}Box {
+        return {{ contractName }}Box(tezosClient: self, at: at)
     }
 }
