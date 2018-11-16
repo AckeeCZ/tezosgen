@@ -41,13 +41,6 @@ open class GenerateCommand: SwiftCLI.Command {
             return
         }
 
-        let funcs: [Function] = contractHeaders.flatMap {
-            switch $0 {
-            case .function(let f): return f
-            default: return nil
-            }
-        }
-
         var projectPath: Path?
         if let projectPathValue = xcode.value {
             projectPath = Path(projectPathValue)
@@ -65,7 +58,7 @@ open class GenerateCommand: SwiftCLI.Command {
             }
         }
 
-        writeGeneratedCode(to: generatedSwiftCodePath, funcs: funcs)
+        writeGeneratedCode(to: generatedSwiftCodePath, contract: contract)
 
         // Do not bind files when project or swift code path is not given
         guard let xcodePath = projectPath, let swiftCodePath = generatedSwiftCodePath, let relativePathValue = output.value else { return }
@@ -73,7 +66,7 @@ open class GenerateCommand: SwiftCLI.Command {
     }
 
     /// Writes and renders code from .stencil files to a given directory
-    private func writeGeneratedCode(to path: Path?, funcs: [Function]) {
+    private func writeGeneratedCode(to path: Path?, contract: Contract) {
 
         let swiftCodePath = path ?? (Path.current + Path("GeneratedContracts"))
 
@@ -93,7 +86,7 @@ open class GenerateCommand: SwiftCLI.Command {
         let args = contract.renderInitToSwift().enumerated().map { "let arg\($0 + 1): \($1)" }.joined(separator: "\n")
         let initArgs = contract.renderArgsToSwift().joined(separator: "\n")
         let environment = Environment(loader: fsLoader, extensions: [stencilSwiftExtension])
-        let contractDict = ["params": params, "args": args, "type": contract.storage.generatedTypeString, "init_args": initArgs, "simple": isSimple, "key": contract.storage.type.rawValue]
+        let contractDict: [String: Any] = ["params": params, "args": args, "type": contract.storage.generatedTypeString, "init_args": initArgs, "simple": isSimple, "key": contract.storage.type.rawValue]
         let context: [String: Any] = ["contractName": contractName.value, "contract": contractDict]
 
         do {
