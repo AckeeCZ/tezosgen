@@ -41,7 +41,7 @@
 		OBJ_117 /* PathKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = "PathKit::PathKit::Product" /* PathKit.framework */; };
 		OBJ_139 /* ABIElement.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_11 /* ABIElement.swift */; };
 		OBJ_140 /* Event.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_12 /* Event.swift */; };
-		OBJ_141 /* Function.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_13 /* Function.swift */; };
+		OBJ_141 /* Contract.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_13 /* Contract.swift */; };
 		OBJ_142 /* GenerateCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_14 /* GenerateCommand.swift */; };
 		OBJ_143 /* ParameterParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_15 /* ParameterParser.swift */; };
 		OBJ_144 /* ParsingError.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_16 /* ParsingError.swift */; };
@@ -298,7 +298,7 @@
 		"ContractCodegen::contractgen::Product" /* contractgen */ = {isa = PBXFileReference; lastKnownFileType = text; path = contractgen; sourceTree = BUILT_PRODUCTS_DIR; };
 		OBJ_11 /* ABIElement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ABIElement.swift; sourceTree = "<group>"; };
 		OBJ_12 /* Event.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Event.swift; sourceTree = "<group>"; };
-		OBJ_13 /* Function.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Function.swift; sourceTree = "<group>"; };
+		OBJ_13 /* Contract.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Contract.swift; sourceTree = "<group>"; };
 		OBJ_14 /* GenerateCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenerateCommand.swift; sourceTree = "<group>"; };
 		OBJ_15 /* ParameterParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParameterParser.swift; sourceTree = "<group>"; };
 		OBJ_16 /* ParsingError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParsingError.swift; sourceTree = "<group>"; };
@@ -464,7 +464,7 @@
 			children = (
 				OBJ_11 /* ABIElement.swift */,
 				OBJ_12 /* Event.swift */,
-				OBJ_13 /* Function.swift */,
+				OBJ_13 /* Contract.swift */,
 				OBJ_14 /* GenerateCommand.swift */,
 				OBJ_15 /* ParameterParser.swift */,
 				OBJ_16 /* ParsingError.swift */,
@@ -967,7 +967,7 @@
 			files = (
 				OBJ_139 /* ABIElement.swift in Sources */,
 				OBJ_140 /* Event.swift in Sources */,
-				OBJ_141 /* Function.swift in Sources */,
+				OBJ_141 /* Contract.swift in Sources */,
 				OBJ_142 /* GenerateCommand.swift in Sources */,
 				OBJ_143 /* ParameterParser.swift in Sources */,
 				OBJ_144 /* ParsingError.swift in Sources */,

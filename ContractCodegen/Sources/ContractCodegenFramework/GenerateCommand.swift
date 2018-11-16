@@ -31,11 +31,11 @@ open class GenerateCommand: SwiftCLI.Command {
             return
         }
 
-        let contractHeaders: [ABIElement]
+        let contract: Contract
 
         do {
             let abiData: Data = try filePath.read()
-            contractHeaders = try JSONDecoder().decode([ABIElement].self, from: abiData)
+            contract = try JSONDecoder().decode(Contract.self, from: abiData)
         } catch {
             stdout <<< "ABI JSON decode error! ⛔️"
             return
@@ -87,9 +87,11 @@ open class GenerateCommand: SwiftCLI.Command {
             fsLoader = FileSystemLoader(paths: ["/usr/local/share/contractgen/templates/"])
         }
 
+        let type = contract.storage.generatedTypeString
+        let isSimple = contract.storage.type == .pair
         let environment = Environment(loader: fsLoader, extensions: [stencilSwiftExtension])
-        let functionsDictArray = funcs.map {["name": $0.name, "params": $0.inputs.map { $0.renderToSwift() }.joined(separator: ", "), "values": $0.inputs.map { $0.abiTypeParameterString }.joined(separator: ", "), "isPayable": $0.isPayable]}
-        let context: [String: Any] = ["contractName": contractName.value, "functions": functionsDictArray]
+        let contractDict = ["params": contract.renderToSwift().joined(separator: ", "), "type": contract.storage.generatedTypeString, "init": contract.parameter.renderInitToSwift(), "simple": isSimple]}
+        let context: [String: Any] = ["contractName": contractName.value, "contract": contractDict]
 
         do {
             if !swiftCodePath.exists {
