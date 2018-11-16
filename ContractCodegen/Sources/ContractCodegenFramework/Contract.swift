@@ -23,14 +23,17 @@ public struct Contract: Decodable {
 }
 
 extension Contract {
-    public func renderToSwift() -> String {
-        let params = parameter.renderToSwift().joined(separator: ",")
-
+    public func renderToSwift() -> [String] {
+        let params = parameter.renderToSwift()
         return params
     }
 
     public func renderInitToSwift() -> String {
         return storage.renderInitToSwift()
+    }
+
+    public func renderArgsToSwift() -> [String] {
+        return storage.renderArgsToSwift()
     }
 }
 
@@ -75,16 +78,12 @@ extension TezosElement {
         }
     }
 
-    private func renderSimpleToSwift(index: Int) -> String {
-        return "param\(index)" + ": " + generatedTypeString
-    }
-
     private func renderPairElementToSwift(index: inout Int, renderedElements: inout [String]) {
         switch type {
         case .pair: renderElementToSwift(index: &index, renderedElements: &renderedElements)
         default:
             index += 1
-            renderedElements.append(renderSimpleToSwift(index: index))
+            renderedElements.append(generatedTypeString)
         }
     }
 
@@ -95,7 +94,7 @@ extension TezosElement {
             second?.renderPairElementToSwift(index: &index, renderedElements: &renderedElements)
         default:
             index += 1
-            renderedElements.append(renderSimpleToSwift(index: index))
+            renderedElements.append(generatedTypeString)
         }
     }
 
@@ -106,16 +105,16 @@ extension TezosElement {
         return renderedElements
     }
 
-    private func renderSimpleInitToSwift(index: Int) -> String {
-        return index % 2 == 0 ? "param\(index))" : "param\(index)"
+    private func renderSimpleInitToSwift(index: Int, suffix: String) -> String {
+        return "param\(index)" + suffix
     }
 
-    private func renderInitPairElementToSwift(index: inout Int, renderedInit: inout String) {
+    private func renderInitPairElementToSwift(index: inout Int, renderedInit: inout String, suffix: String) {
         switch type {
         case .pair: renderInitElementToSwift(index: &index, renderedInit: &renderedInit)
         default:
             index += 1
-            renderedInit += renderSimpleInitToSwift(index: index)
+            renderedInit += renderSimpleInitToSwift(index: index, suffix: suffix)
         }
     }
 
@@ -123,12 +122,12 @@ extension TezosElement {
         switch type {
         case .pair:
             renderedInit += "TezosPair(first: "
-            first?.renderInitPairElementToSwift(index: &index, renderedInit: &renderedInit)
+            first?.renderInitPairElementToSwift(index: &index, renderedInit: &renderedInit, suffix: "")
             renderedInit += ", second: "
-            second?.renderInitPairElementToSwift(index: &index, renderedInit: &renderedInit)
+            second?.renderInitPairElementToSwift(index: &index, renderedInit: &renderedInit, suffix: ")")
         default:
             index += 1
-            renderedInit += renderSimpleInitToSwift(index: index)
+            renderedInit += renderSimpleInitToSwift(index: index, suffix: ")")
         }
     }
 
@@ -137,5 +136,23 @@ extension TezosElement {
         var renderedInit: String = ""
         renderInitElementToSwift(index: &index, renderedInit: &renderedInit)
         return renderedInit
+    }
+
+    private func renderArgInitElementToSwift(index: inout Int, currentlyRendered: String, args: inout [String]) {
+        switch type {
+        case .pair:
+            first?.renderArgInitElementToSwift(index: &index, currentlyRendered: currentlyRendered + ".first", args: &args)
+            second?.renderArgInitElementToSwift(index: &index, currentlyRendered: currentlyRendered + ".second", args: &args)
+        default:
+            index += 1
+            args.append("self.arg\(index) = \(currentlyRendered)")
+        }
+    }
+
+    public func renderArgsToSwift() -> [String] {
+        var index = 0
+        var args: [String] = []
+        renderArgInitElementToSwift(index: &index, currentlyRendered: "tezosPair", args: &args)
+        return args
     }
 }
