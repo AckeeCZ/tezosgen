@@ -152,7 +152,7 @@ extension TezosElement {
     public func renderArgsToSwift() -> [String] {
         var index = 0
         var args: [String] = []
-        renderArgInitElementToSwift(index: &index, currentlyRendered: "tezosPair", args: &args)
+        renderArgInitElementToSwift(index: &index, currentlyRendered: "tezosElement", args: &args)
         return args
     }
 }

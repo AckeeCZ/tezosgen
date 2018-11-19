@@ -73,7 +73,9 @@ open class GenerateCommand: SwiftCLI.Command {
         let stencilSwiftExtension = Extension()
         stencilSwiftExtension.registerStencilSwiftExtensions()
         let fsLoader: FileSystemLoader
-        let relativeTemplatesPath = executableLocation + Path("../templates/")
+        // TODO: Change back to ../templates!!!!!!
+//        let relativeTemplatesPath = executableLocation + Path("../templates/")
+        let relativeTemplatesPath = executableLocation + Path("/Users/marekfort/Development/ackee/Tezos-iOS-Dev-Kit/ContractCodegen/templates")
         if relativeTemplatesPath.exists {
             fsLoader = FileSystemLoader(paths: [relativeTemplatesPath])
         } else {
@@ -81,12 +83,18 @@ open class GenerateCommand: SwiftCLI.Command {
         }
 
         let type = contract.storage.generatedTypeString
-        let isSimple = contract.storage.type == .pair
-        let params = contract.renderToSwift().enumerated().map { "let param\($0 + 1): \($1)" }.joined(separator: ", ")
-        let args = contract.renderInitToSwift().enumerated().map { "let arg\($0 + 1): \($1)" }.joined(separator: "\n")
+        let isSimple = contract.storage.type != .pair
+        let params = contract.renderToSwift().enumerated().map { "param\($0 + 1): \($1)" }.joined(separator: ", ")
+        let args = contract.renderToSwift().enumerated().map { "let arg\($0 + 1): \($1)" }.joined(separator: "\n")
+        let renderedInit: String
+        if isSimple {
+            renderedInit = "param1"
+        } else {
+            renderedInit = contract.renderInitToSwift()
+        }
         let initArgs = contract.renderArgsToSwift().joined(separator: "\n")
         let environment = Environment(loader: fsLoader, extensions: [stencilSwiftExtension])
-        let contractDict: [String: Any] = ["params": params, "args": args, "type": contract.storage.generatedTypeString, "init_args": initArgs, "simple": isSimple, "key": contract.storage.type.rawValue]
+        let contractDict: [String: Any] = ["params": params, "args": args, "type": contract.storage.generatedTypeString, "init": renderedInit, "init_args": initArgs, "simple": "\(isSimple)", "key": contract.storage.type.rawValue]
         let context: [String: Any] = ["contractName": contractName.value, "contract": contractDict]
 
         do {
@@ -104,6 +112,7 @@ open class GenerateCommand: SwiftCLI.Command {
             let contractCodePath = swiftCodePath + Path(contractName.value + ".swift")
             try contractCodePath.write(rendered)
         } catch {
+            print(contractDict)
             stdout <<< "Write Error! 😱"
             return
         }
