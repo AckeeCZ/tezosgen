@@ -2,7 +2,7 @@ import Foundation
 import XCTest
 import PathKit
 import SwiftCLI
-import ContractCodegenFramework
+import TezosGenFramework
 
 class CommandLineToolTests: XCTestCase {
 

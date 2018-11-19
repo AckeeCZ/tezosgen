@@ -2,7 +2,7 @@
 
 import Foundation
 import SwiftCLI
-import ContractCodegenFramework
+import TezosGenFramework
 
 let generatorCLI = CLI(singleCommand: GenerateCommand())
 

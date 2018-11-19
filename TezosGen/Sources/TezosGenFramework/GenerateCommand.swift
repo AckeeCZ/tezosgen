@@ -73,16 +73,13 @@ open class GenerateCommand: SwiftCLI.Command {
         let stencilSwiftExtension = Extension()
         stencilSwiftExtension.registerStencilSwiftExtensions()
         let fsLoader: FileSystemLoader
-        // TODO: Change back to ../templates!!!!!!
-//        let relativeTemplatesPath = executableLocation + Path("../templates/")
-        let relativeTemplatesPath = executableLocation + Path("/Users/marekfort/Development/ackee/Tezos-iOS-Dev-Kit/ContractCodegen/templates")
+        let relativeTemplatesPath = executableLocation + Path("../templates/")
         if relativeTemplatesPath.exists {
             fsLoader = FileSystemLoader(paths: [relativeTemplatesPath])
         } else {
-            fsLoader = FileSystemLoader(paths: ["/usr/local/share/contractgen/templates/"])
+            fsLoader = FileSystemLoader(paths: ["/usr/local/share/tezosgen/templates/"])
         }
 
-        let type = contract.storage.generatedTypeString
         let isSimple = contract.storage.type != .pair
         let params = contract.renderToSwift().enumerated().map { "param\($0 + 1): \($1)" }.joined(separator: ", ")
         let args = contract.renderToSwift().enumerated().map { "let arg\($0 + 1): \($1)" }.joined(separator: "\n")
@@ -138,12 +135,6 @@ open class GenerateCommand: SwiftCLI.Command {
 
     /// Binds file references with project, adds files to target
     private func bindFilesWithProject(xcodePath: Path, swiftCodePath: Path, relativePathValue: String) {
-        let separatedPath = "\(swiftCodePath.absolute())".components(separatedBy: "/")
-        guard let groupName = separatedPath.last else {
-            stdout <<< "Xcode path error"
-            return
-        }
-
         let targetsString: String
         let rakeFilePath: Path
         do {
@@ -151,7 +142,7 @@ open class GenerateCommand: SwiftCLI.Command {
             if relativeRakefilePath.exists {
                 rakeFilePath = relativeRakefilePath
             } else {
-                rakeFilePath = Path("/usr/local/share/contractgen/Rakefile")
+                rakeFilePath = Path("/usr/local/share/tezosgen/Rakefile")
             }
             targetsString = try capture(bash: "rake -f \(rakeFilePath.absolute()) xcode:find_targets'[\(xcodePath.absolute())]'").stdout
         } catch {

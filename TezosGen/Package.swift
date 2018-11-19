@@ -4,10 +4,10 @@
 import PackageDescription
 
 let package = Package(
-    name: "ContractCodegen",
+    name: "TezosGen",
     products: [
-        .library(name: "ContractCodegen", targets: ["ContractCodegenFramework"]),
-        .executable(name: "contractgen", targets: ["contractgen"])
+        .library(name: "TezosGen", targets: ["TezosGenFramework"]),
+        .executable(name: "tezosgen", targets: ["tezosgen"])
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
@@ -19,21 +19,21 @@ let package = Package(
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
         // Targets can depend on other targets in this package, and on products in packages which this package depends on.
         .target(
-            name: "ContractCodegenFramework",
+            name: "TezosGenFramework",
             dependencies: [
                 "PathKit",
                 "StencilSwiftKit",
             ]),
         .target(
-            name: "contractgen",
+            name: "tezosgen",
             dependencies: [
                 "SwiftCLI",
-                .target(name: "ContractCodegenFramework")
+                .target(name: "TezosGenFramework")
             ]),
         .testTarget(
             name: "CLICodegenTests",
             dependencies: [
-                .target(name: "ContractCodegenFramework"),
+                .target(name: "TezosGenFramework"),
                 "SwiftCLI",
                 "PathKit",
             ]),
