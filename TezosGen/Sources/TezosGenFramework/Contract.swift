@@ -38,44 +38,125 @@ extension Contract {
 }
 
 public enum TezosPrimaryType: String, Codable {
+    case string
     case int
     case nat
+    case bool
+    case bytes
+    case set
+    case list
     case pair
+    case option
+    case or
+    case timestamp
+    case tez
+    case signature
+    case key
+    case contract
+    case keyHash = "key_hash"
+    case mutez
+    case map
+    case bigMap = "big_map"
 }
 
 public class TezosElement: Decodable {
     public let name: String = ""
     public let type: TezosPrimaryType
-    // TODO: Support optionals
-    // public let optional: Bool
-    public let first: TezosElement?
-    public let second: TezosElement?
+    public let args: [TezosElement]
 
     enum CodingKeys: String, CodingKey {
         case prim
-        case first
-        case second
+        case args
     }
 
     public required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.type = try container.decode(TezosPrimaryType.self, forKey: .prim)
-        self.first = try container.decodeIfPresent(TezosElement.self, forKey: .first)
-        self.second = try container.decodeIfPresent(TezosElement.self, forKey: .second)
+        switch type {
+        case .pair:
+            var nestedContainer = try container.nestedUnkeyedContainer(forKey: .args)
+            let first = try nestedContainer.decode(TezosElement.self)
+            let second = try nestedContainer.decode(TezosElement.self)
+            args = [first, second]
+        case .list, .set, .option:
+            var nestedContainer = try container.nestedUnkeyedContainer(forKey: .args)
+            let element = try nestedContainer.decode(TezosElement.self)
+            args = [element]
+        default:
+            args = []
+        }
     }
 }
 
 extension TezosElement {
     public var generatedTypeString: String {
         switch type {
+        case .string:
+            return "String"
         case .int:
             return "Int"
         case .nat:
             return "UInt"
+        case .bytes:
+            return "Data"
+        case .bool:
+            return "Bool"
+        case .timestamp:
+            return "Date"
+        case .tez:
+            return "Tez"
+        case .signature:
+            // TODO: Signature type
+            return "String"
+        case .key:
+            // TODO: Key type
+            return "String"
+        case .contract:
+            // TODO: Contract with storace type
+            return "String"
+        case .keyHash:
+            // TODO: Key hash type
+            return "String"
+        case .mutez:
+            // TODO: Mutez!
+            return "Tez"
         case .pair:
-            guard let first = first, let second = second else { return "" }
+            guard let first = args.first, let second = args.last else { return "" }
             return "TezosPair<\(first.generatedTypeString), \(second.generatedTypeString)>"
+        case .or:
+            guard let first = args.first, let second = args.last else { return "" }
+            return "(\(first.generatedTypeString)?, \(second.generatedTypeString)?)"
+        case .map:
+            // TODO
+            guard let first = args.first, let second = args.last else { return "" }
+            return "(\(first.generatedTypeString)?, \(second.generatedTypeString)?)"
+        case .bigMap:
+            // TODO
+            guard let first = args.first, let second = args.last else { return "" }
+            return "(\(first.generatedTypeString)?, \(second.generatedTypeString)?)"
+        case .option:
+            guard let element = args.first else { return "" }
+            return "\(element.generatedTypeString)?"
+        case .list:
+            guard let element = args.first else { return "" }
+            return "Array<\(element.generatedTypeString)>"
+        case .set:
+            guard let element = args.first else { return "" }
+            return "Set<\(element.generatedTypeString)>"
         }
+    }
+
+    public var key: String? {
+        switch type {
+        case .option:
+            return nil
+        default:
+            return type.rawValue
+        }
+    }
+
+    private func renderSimpleToSwift(index: Int) -> String {
+        return generatedTypeString
     }
 
     private func renderPairElementToSwift(index: inout Int, renderedElements: inout [String]) {
@@ -83,18 +164,18 @@ extension TezosElement {
         case .pair: renderElementToSwift(index: &index, renderedElements: &renderedElements)
         default:
             index += 1
-            renderedElements.append(generatedTypeString)
+            renderedElements.append(renderSimpleToSwift(index: index))
         }
     }
 
     private func renderElementToSwift(index: inout Int, renderedElements: inout [String]) {
         switch type {
         case .pair:
-            first?.renderPairElementToSwift(index: &index, renderedElements: &renderedElements)
-            second?.renderPairElementToSwift(index: &index, renderedElements: &renderedElements)
+            args.first?.renderPairElementToSwift(index: &index, renderedElements: &renderedElements)
+            args.last?.renderPairElementToSwift(index: &index, renderedElements: &renderedElements)
         default:
             index += 1
-            renderedElements.append(generatedTypeString)
+            renderedElements.append(renderSimpleToSwift(index: index))
         }
     }
 
@@ -122,12 +203,12 @@ extension TezosElement {
         switch type {
         case .pair:
             renderedInit += "TezosPair(first: "
-            first?.renderInitPairElementToSwift(index: &index, renderedInit: &renderedInit, suffix: "")
+            args.first?.renderInitPairElementToSwift(index: &index, renderedInit: &renderedInit, suffix: "")
             renderedInit += ", second: "
-            second?.renderInitPairElementToSwift(index: &index, renderedInit: &renderedInit, suffix: ")")
+            args.last?.renderInitPairElementToSwift(index: &index, renderedInit: &renderedInit, suffix: ")")
         default:
             index += 1
-            renderedInit += renderSimpleInitToSwift(index: index, suffix: ")")
+            renderedInit += renderSimpleInitToSwift(index: index, suffix: "")
         }
     }
 
@@ -141,8 +222,8 @@ extension TezosElement {
     private func renderArgInitElementToSwift(index: inout Int, currentlyRendered: String, args: inout [String]) {
         switch type {
         case .pair:
-            first?.renderArgInitElementToSwift(index: &index, currentlyRendered: currentlyRendered + ".first", args: &args)
-            second?.renderArgInitElementToSwift(index: &index, currentlyRendered: currentlyRendered + ".second", args: &args)
+            self.args.first?.renderArgInitElementToSwift(index: &index, currentlyRendered: currentlyRendered + ".first", args: &args)
+            self.args.last?.renderArgInitElementToSwift(index: &index, currentlyRendered: currentlyRendered + ".second", args: &args)
         default:
             index += 1
             args.append("self.arg\(index) = \(currentlyRendered)")
@@ -152,7 +233,7 @@ extension TezosElement {
     public func renderArgsToSwift() -> [String] {
         var index = 0
         var args: [String] = []
-        renderArgInitElementToSwift(index: &index, currentlyRendered: "tezosElement", args: &args)
+        renderArgInitElementToSwift(index: &index, currentlyRendered: "tezosPair", args: &args)
         return args
     }
 }

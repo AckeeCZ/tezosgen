@@ -11,7 +11,7 @@ struct {{ contractName }}Box {
     }
     func call({{ contract.params }}) -> ContractMethodInvocation {
 		let input: {{ contract.type }} = {{ contract.init }} 
-        let send: (_ from: Wallet, _ amount: TezosBalance, _ completion: @escaping RPCCompletion<String>) -> Void = { from, amount, completion in
+        let send: (_ from: Wallet, _ amount: Tez, _ completion: @escaping RPCCompletion<String>) -> Void = { from, amount, completion in
             self.tezosClient.send(amount: amount, to: self.at, from: from, input: input, completion: completion)
         }
 
@@ -25,7 +25,7 @@ struct {{ contractName }}Box {
 }
 
 struct {{ contractName }}Status: Decodable {
-    let balance: TezosBalance
+    let balance: Tez
     let spendable: Bool
     let manager: String
     let delegate: StatusDelegate
@@ -34,14 +34,15 @@ struct {{ contractName }}Status: Decodable {
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: ContractStatusKeys.self)
-        self.balance = try container.decode(TezosBalance.self, forKey: .balance)
+        self.balance = try container.decode(Tez.self, forKey: .balance)
         self.spendable = try container.decode(Bool.self, forKey: .spendable)
         self.manager = try container.decode(String.self, forKey: .manager)
         self.delegate = try container.decode(StatusDelegate.self, forKey: .delegate)
         self.counter = try container.decodeRPC(Int.self, forKey: .counter)
-    
-		let storageContainer = try container.nestedContainer(keyedBy: ContractStatusKeys.self, forKey: .script).nestedContainer(keyedBy: TezosTypeKeys.self, forKey: .storage)
-        {% if contract.simple %}self.storage = try storageContainer.decodeRPC({{ contract.type }}.self, forKey: .{{ contract.key }}){% else %}self.storage = try storageContainer.decode({{ contractName }}StatusStorage.self, forKey: .storage){% endif %}
+
+        let storageContainer = try container.nestedContainer(keyedBy: ContractStatusKeys.self, forKey: .script).nestedContainer(keyedBy: StorageKeys.self, forKey: .storage)
+        {% if not contract.key %}self.storage = try storageContainer.decodeRPC({{ contract.type }}.self){% elif contract.simple %}let nestedContainer = storageContainer.nestedContainer(keyedBy: TezosTypeKeys.self, forKey: .storage)
+        self.storage = try nestedContainer.decodeRPC({{ contract.type }}.self, forKey: .{{ contract.key }}){% else %}self.storage = try storageContainer.decode({{ contractName }}StatusStorage.self, forKey: .storage){% endif %}
     }
 }{% if not contract.simple %}
 

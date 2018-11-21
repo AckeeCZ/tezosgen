@@ -91,7 +91,10 @@ open class GenerateCommand: SwiftCLI.Command {
         }
         let initArgs = contract.renderArgsToSwift().joined(separator: "\n")
         let environment = Environment(loader: fsLoader, extensions: [stencilSwiftExtension])
-        let contractDict: [String: Any] = ["params": params, "args": args, "type": contract.storage.generatedTypeString, "init": renderedInit, "init_args": initArgs, "simple": "\(isSimple)", "key": contract.storage.type.rawValue]
+        var contractDict: [String: Any] = ["params": params, "args": args, "type": contract.storage.generatedTypeString, "init": renderedInit, "init_args": initArgs, "simple": "\(isSimple)"]
+        if let key = contract.storage.key {
+            contractDict["key"] = key
+        }
         let context: [String: Any] = ["contractName": contractName.value, "contract": contractDict]
 
         do {
@@ -109,7 +112,6 @@ open class GenerateCommand: SwiftCLI.Command {
             let contractCodePath = swiftCodePath + Path(contractName.value + ".swift")
             try contractCodePath.write(rendered)
         } catch {
-            print(contractDict)
             stdout <<< "Write Error! 😱"
             return
         }
