@@ -83,12 +83,7 @@ open class GenerateCommand: SwiftCLI.Command {
         let isSimple = contract.storage.type != .pair
         let params = contract.renderToSwift().enumerated().map { "param\($0 + 1): \($1)" }.joined(separator: ", ")
         let args = contract.renderToSwift().enumerated().map { "let arg\($0 + 1): \($1)" }.joined(separator: "\n")
-        let renderedInit: String
-        if isSimple {
-            renderedInit = "param1"
-        } else {
-            renderedInit = contract.renderInitToSwift()
-        }
+        let renderedInit = contract.renderInitToSwift()
         let initArgs = contract.renderArgsToSwift().joined(separator: "\n")
         let environment = Environment(loader: fsLoader, extensions: [stencilSwiftExtension])
         var contractDict: [String: Any] = ["params": params, "args": args, "type": contract.storage.generatedTypeString, "init": renderedInit, "init_args": initArgs, "simple": "\(isSimple)"]
