@@ -28,16 +28,13 @@ extension Contract {
         return params
     }
 
-    public func renderInitToSwift() -> String {
-        return storage.renderInitToSwift()
-    }
-
     public func renderArgsToSwift() -> [String] {
         return storage.renderArgsToSwift()
     }
 }
 
 public enum TezosPrimaryType: String, Codable {
+    case unit
     case string
     case int
     case nat
@@ -91,6 +88,8 @@ public class TezosElement: Decodable {
 extension TezosElement {
     public var generatedTypeString: String {
         switch type {
+        case .unit:
+            return "Void"
         case .string:
             return "String"
         case .int:
@@ -145,7 +144,7 @@ extension TezosElement {
             return "\(element.generatedTypeString)?"
         case .list:
             guard let element = args.first else { return "" }
-            return "Array<\(element.generatedTypeString)>"
+            return "[\(element.generatedTypeString)]"
         case .set:
             guard let element = args.first else { return "" }
             return "Set<\(element.generatedTypeString)>"

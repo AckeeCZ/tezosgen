@@ -1,6 +1,8 @@
 // Generated using TezosGen 
 // swiftlint:disable file_length
 
+import Foundation
+
 struct {{ contractName }}Box {
     fileprivate let tezosClient: TezosClient 
     fileprivate let at: String
@@ -9,21 +11,26 @@ struct {{ contractName }}Box {
        self.tezosClient = tezosClient 
        self.at = at 
     }
-    func call({{ contract.params }}) -> ContractMethodInvocation {
+
+    {% if contract.parameter_type != "Void" %}func call({{ contract.params }}) -> ContractMethodInvocation {
 		let input: {{ contract.parameter_type }} = {{ contract.init }} 
         let send: (_ from: Wallet, _ amount: Tez, _ completion: @escaping RPCCompletion<String>) -> Void = { from, amount, completion in
             self.tezosClient.send(amount: amount, to: self.at, from: from, input: input, completion: completion)
         }
 
         return ContractMethodInvocation(send: send)
-    }
+    }{% else %}func call() -> ContractMethodInvocation {
+        let send: (_ from: Wallet, _ amount: Tez, _ completion: @escaping RPCCompletion<String>) -> Void = { from, amount, completion in
+            self.tezosClient.send(amount: amount, to: self.at, from: from, completion: completion)
+        }
+    }{% endif %}
 
-	func status(completion: @escaping RPCCompletion<{{ contractName }}Status>) {
+	func status(completion: @escaping RPCCompletion<{% if contract.storage_type != "Void" %}{{ contractName }}Status{% else %}ContractStatus{% endif %}>) {
         let endpoint = "/chains/main/blocks/head/context/contracts/" + at
         tezosClient.sendRPC(endpoint: endpoint, method: .get, completion: completion)
     }
 }
-
+{% if contract.storage_type != "Void" %}
 struct {{ contractName }}Status: Decodable {
     let balance: Tez
     let spendable: Bool
@@ -56,7 +63,7 @@ struct {{ contractName }}StatusStorage: Decodable {
 		{{ contract.init_args }}
     }
 }{% endif %}
-
+{% endif %}
 extension TezosClient {
     func {% filter lowerFirstLetter %}{{ contractName }}{% endfilter %}(at: String) -> {{ contractName }}Box {
         return {{ contractName }}Box(tezosClient: self, at: at)
