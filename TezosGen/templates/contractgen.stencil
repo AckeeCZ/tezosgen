@@ -13,8 +13,16 @@ struct {{ contractName }}Box {
     }
 
     {% if contract.parameter_type != "Void" %}func call({{ contract.params }}) -> ContractMethodInvocation {
+        let send: (_ from: Wallet, _ amount: Tez, _ completion: @escaping RPCCompletion<String>) -> Void{% if contract.checks %}
+        guard {{ contract.checks }} else { 
+            send = { from, amount, completion in
+                completion(.failure(.orError))
+            }
+            return ContractMethodInvocation(send: send)
+        }
+        {% endif %}
 		let input: {{ contract.parameter_type }} = {{ contract.init }} 
-        let send: (_ from: Wallet, _ amount: Tez, _ completion: @escaping RPCCompletion<String>) -> Void = { from, amount, completion in
+        send = { from, amount, completion in
             self.tezosClient.send(amount: amount, to: self.at, from: from, input: input, completion: completion)
         }
 

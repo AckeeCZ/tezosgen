@@ -85,9 +85,13 @@ open class GenerateCommand: SwiftCLI.Command {
         let renderedInit = contract.parameter.renderInitToSwift()
         let initArgs = contract.renderArgsToSwift().joined(separator: "\n\t\t")
         let environment = Environment(loader: fsLoader, extensions: [stencilSwiftExtension])
-        var contractDict: [String: Any] = ["params": params, "args": args, "storage_type": contract.storage.generatedTypeString, "parameter_type": contract.parameter.generatedTypeString, "init": renderedInit, "init_args": initArgs, "simple": contract.storage.isSimple]
+        var contractDict: [String: Any] = ["params": params, "args": args, "storage_type": contract.storage.generatedTypeString, "parameter_type": contract.parameter.generatedTypeString, "init": renderedInit.0, "init_args": initArgs, "simple": contract.storage.isSimple]
         if let key = contract.storage.key {
             contractDict["key"] = key
+        }
+
+        if !renderedInit.1.isEmpty {
+            contractDict["checks"] = renderedInit.1.enumerated().map { "let tezosOr\($0 + 1) = \($1)" }.joined(separator: ", ")
         }
         print(contractDict)
         let context: [String: Any] = ["contractName": contractName.value, "contract": contractDict]

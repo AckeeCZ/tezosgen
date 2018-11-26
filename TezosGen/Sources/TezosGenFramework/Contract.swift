@@ -23,9 +23,8 @@ public struct Contract: Decodable {
 }
 
 extension Contract {
-    public func renderToSwift() -> [String] {
-        let params = parameter.renderToSwift()
-        return params
+    public func renderInitToSwift() -> (String, [String]) {
+        return parameter.renderInitToSwift()
     }
 
     public func renderArgsToSwift() -> [String] {
@@ -70,7 +69,7 @@ public class TezosElement: Decodable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.type = try container.decode(TezosPrimaryType.self, forKey: .prim)
         switch type {
-        case .pair:
+        case .pair, .or:
             var nestedContainer = try container.nestedUnkeyedContainer(forKey: .args)
             let first = try nestedContainer.decode(TezosElement.self)
             let second = try nestedContainer.decode(TezosElement.self)
@@ -124,7 +123,7 @@ extension TezosElement {
             return "TezosPair<\(first.generatedTypeString), \(second.generatedTypeString)>"
         case .or:
             guard let first = args.first, let second = args.last else { return "" }
-            return "(\(first.generatedTypeString)?, \(second.generatedTypeString)?)"
+            return "TezosOr<\(first.generatedTypeString), \(second.generatedTypeString)>"
         case .map:
             // TODO
             guard let first = args.first, let second = args.last else { return "" }
@@ -149,10 +148,10 @@ extension TezosElement {
         switch type {
         case .option:
             return args.first?.type != .pair
-        case .pair:
+        case .pair, .or:
             return false
         default:
-            return true 
+            return true
         }
     }
 
@@ -190,8 +189,11 @@ extension TezosElement {
         case .pair:
             args.first?.renderPairElementToSwift(index: &index, renderedElements: &renderedElements, optional: optional)
             args.last?.renderPairElementToSwift(index: &index, renderedElements: &renderedElements, optional: optional)
+        case .or:
+            args.first?.renderPairElementToSwift(index: &index, renderedElements: &renderedElements, optional: true)
+            args.last?.renderPairElementToSwift(index: &index, renderedElements: &renderedElements, optional: true)
         case .option:
-            if args.first?.type == .pair {
+            if args.first?.type == .pair || args.first?.type == .or {
                 args.first?.args.first?.renderPairElementToSwift(index: &index, renderedElements: &renderedElements, optional: true)
                 args.first?.args.last?.renderPairElementToSwift(index: &index, renderedElements: &renderedElements, optional: true)
             } else {
@@ -215,35 +217,50 @@ extension TezosElement {
         return "param\(index)" + suffix
     }
 
-    private func renderInitPairElementToSwift(index: inout Int, renderedInit: inout String, suffix: String) {
+    private func renderInitPairElementToSwift(index: inout Int, renderedInit: inout String, orChecks: inout [String], suffix: String) {
         switch type {
-        case .pair: renderInitElementToSwift(index: &index, renderedInit: &renderedInit)
+        case .pair, .or: renderInitElementToSwift(index: &index, renderedInit: &renderedInit, orChecks: &orChecks)
         default:
             index += 1
             renderedInit += renderSimpleInitToSwift(index: index, suffix: suffix)
         }
     }
 
-    private func renderInitElementToSwift(index: inout Int, renderedInit: inout String) {
+    private func renderInitElementToSwift(index: inout Int, renderedInit: inout String, orChecks: inout [String]) {
         switch type {
         case .pair:
             renderedInit += "TezosPair(first: "
-            args.first?.renderInitPairElementToSwift(index: &index, renderedInit: &renderedInit, suffix: "")
+            args.first?.renderInitPairElementToSwift(index: &index, renderedInit: &renderedInit, orChecks: &orChecks, suffix: "")
             renderedInit += ", second: "
-            args.last?.renderInitPairElementToSwift(index: &index, renderedInit: &renderedInit, suffix: ")")
+            args.last?.renderInitPairElementToSwift(index: &index, renderedInit: &renderedInit, orChecks: &orChecks, suffix: ")")
+        case .or:
+            var orCheck = ""
+            orCheck += "TezosOr(left: "
+            args.first?.renderInitPairElementToSwift(index: &index, renderedInit: &orCheck, orChecks: &orChecks, suffix: "")
+            orCheck += ", right: "
+            args.last?.renderInitPairElementToSwift(index: &index, renderedInit: &orCheck, orChecks: &orChecks, suffix: ")")
+            orChecks.append(orCheck)
+            renderedInit += "tezosOr\(orChecks.count)"
         case .option:
-            args.first?.renderInitElementToSwift(index: &index, renderedInit: &renderedInit)
+            if args.first?.type == .or {
+                renderedInit += "TezosOr(left: "
+                args.first?.args.first?.renderInitPairElementToSwift(index: &index, renderedInit: &renderedInit, orChecks: &orChecks, suffix: "")
+                renderedInit += ", right: "
+                args.first?.args.last?.renderInitPairElementToSwift(index: &index, renderedInit: &renderedInit, orChecks: &orChecks, suffix: ")")
+            }
+            args.first?.renderInitElementToSwift(index: &index, renderedInit: &renderedInit, orChecks: &orChecks)
         default:
             index += 1
             renderedInit += renderSimpleInitToSwift(index: index, suffix: "")
         }
     }
 
-    public func renderInitToSwift() -> String {
+    public func renderInitToSwift() -> (String, [String]) {
         var index = 0
         var renderedInit: String = ""
-        renderInitElementToSwift(index: &index, renderedInit: &renderedInit)
-        return renderedInit
+        var orChecks: [String] = []
+        renderInitElementToSwift(index: &index, renderedInit: &renderedInit, orChecks: &orChecks)
+        return (renderedInit, orChecks)
     }
 
     private func renderArgInitElementToSwift(index: inout Int, currentlyRendered: String, args: inout [String]) {
@@ -251,11 +268,17 @@ extension TezosElement {
         case .pair:
             self.args.first?.renderArgInitElementToSwift(index: &index, currentlyRendered: currentlyRendered + ".first", args: &args)
             self.args.last?.renderArgInitElementToSwift(index: &index, currentlyRendered: currentlyRendered + ".second", args: &args)
+        case .or:
+            self.args.first?.renderArgInitElementToSwift(index: &index, currentlyRendered: currentlyRendered + ".left", args: &args)
+            self.args.last?.renderArgInitElementToSwift(index: &index, currentlyRendered: currentlyRendered + ".right", args: &args)
         case .option:
             let arg = self.args.first
             if arg?.type == .pair {
                 arg?.args.first?.renderArgInitElementToSwift(index: &index, currentlyRendered: currentlyRendered + "?" + ".first", args: &args)
                 arg?.args.last?.renderArgInitElementToSwift(index: &index, currentlyRendered: currentlyRendered + "?" + ".second", args: &args)
+            } else if arg?.type == .or {
+                arg?.args.first?.renderArgInitElementToSwift(index: &index, currentlyRendered: currentlyRendered + "?" + ".left", args: &args)
+                arg?.args.last?.renderArgInitElementToSwift(index: &index, currentlyRendered: currentlyRendered + "?" + ".right", args: &args)
             } else {
                 index += 1
                 args.append("self.arg\(index) = \(currentlyRendered)")
