@@ -65,8 +65,7 @@ struct {{ contractName }}StatusStorage: Decodable {
 	{{ contract.args }}
 
     public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: StorageKeys.self)
-        let tezosElement = try container.decode({{ contract.storage_type }}.self, forKey: .args)
+        let tezosElement = try decoder.singleValueContainer().decode({{ contract.storage_type }}.self)
 
 		{{ contract.init_args }}
     }
