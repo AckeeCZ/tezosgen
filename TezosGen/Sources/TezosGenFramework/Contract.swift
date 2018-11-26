@@ -135,12 +135,6 @@ extension TezosElement {
             return "(\(first.generatedTypeString)?, \(second.generatedTypeString)?)"
         case .option:
             guard let element = args.first else { return "" }
-            if element.type == .pair {
-                guard let first = element.args.first, let second = element.args.last else { return "\(element.generatedTypeString)" }
-                let firstSuffix = first.type != .option ? "?" : ""
-                let secondSuffix = second.type != .option ? "?" : ""
-                return "TezosPair<\(first.generatedTypeString)\(firstSuffix), \(second.generatedTypeString)\(secondSuffix)>"
-            }
             return "\(element.generatedTypeString)?"
         case .list:
             guard let element = args.first else { return "" }
@@ -150,24 +144,6 @@ extension TezosElement {
             return "Set<\(element.generatedTypeString)>"
         }
     }
-
-//    private func generateOptionalTypeString() -> String {
-//        guard let element = args.first else { return "" }
-//        if element.type == .pair {
-//            guard let first = element.args.first, let second = element.args.last else { return "\(element.generatedTypeString)" }
-//            let firstString: String
-//            switch first.type {
-//            case .option, .pair:
-//                firstString = first.generateOptionalTypeString()
-//            case .pair:
-//                firstString = first.generateOptionalTypeString()
-//            }
-//            let firstSuffix = first.type != .option ? "?" : ""
-//            let secondSuffix = second.type != .option ? "?" : ""
-//            return "TezosPair<\(first.generatedTypeString)\(firstSuffix), \(second.generatedTypeString)\(secondSuffix)>"
-//        }
-//        return "\(element.generatedTypeString)?"
-//    }
 
     public var isSimple: Bool {
         switch type {
@@ -278,8 +254,8 @@ extension TezosElement {
         case .option:
             let arg = self.args.first
             if arg?.type == .pair {
-                arg?.args.first?.renderArgInitElementToSwift(index: &index, currentlyRendered: currentlyRendered + ".first", args: &args)
-                arg?.args.last?.renderArgInitElementToSwift(index: &index, currentlyRendered: currentlyRendered + ".second", args: &args)
+                arg?.args.first?.renderArgInitElementToSwift(index: &index, currentlyRendered: currentlyRendered + "?" + ".first", args: &args)
+                arg?.args.last?.renderArgInitElementToSwift(index: &index, currentlyRendered: currentlyRendered + "?" + ".second", args: &args)
             } else {
                 index += 1
                 args.append("self.arg\(index) = \(currentlyRendered)")
