@@ -13,7 +13,7 @@ struct {{ contractName }}Box {
     }
 
     {% if contract.parameter_type != "Void" %}func call({{ contract.params }}) -> ContractMethodInvocation {
-        let send: (_ from: Wallet, _ amount: Tez, _ completion: @escaping RPCCompletion<String>) -> Void{% if contract.checks %}
+        let send: (_ from: Wallet, _ amount: TezToken, _ completion: @escaping RPCCompletion<String>) -> Void{% if contract.checks %}
         guard {{ contract.checks }} else { 
             send = { from, amount, completion in
                 completion(.failure(.orError))
@@ -28,7 +28,7 @@ struct {{ contractName }}Box {
 
         return ContractMethodInvocation(send: send)
     }{% else %}func call() -> ContractMethodInvocation {
-        let send: (_ from: Wallet, _ amount: Tez, _ completion: @escaping RPCCompletion<String>) -> Void = { from, amount, completion in
+        let send: (_ from: Wallet, _ amount: TezToken, _ completion: @escaping RPCCompletion<String>) -> Void = { from, amount, completion in
             self.tezosClient.send(amount: amount, to: self.at, from: from, completion: completion)
         }
     }{% endif %}
@@ -45,7 +45,7 @@ struct {{ contractName }}Status: Decodable {
     let manager: String
     let delegate: StatusDelegate
     let counter: Int
-    let storage: {% if contract.simple %}{{ contract.storage_type }}{% else %}{{ contractName }}StatusStorage{% endif %} 
+    let storage: {% if contract.simple %}{{ contract.storage_type }}{% else %}{{ contractName }}StatusStorage{% endif %}
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: ContractStatusKeys.self)
@@ -56,7 +56,7 @@ struct {{ contractName }}Status: Decodable {
         self.counter = try container.decodeRPC(Int.self, forKey: .counter)
 
         let scriptContainer = try container.nestedContainer(keyedBy: ContractStatusKeys.self, forKey: .script)
-        {% if contract.simple %}{% if contract.key == "set" or contract.key == "list" %}self.storage = try scriptContainer.decodeRPC({{ contract.storage_type }}.self, forKey: .storage){% else %}self.storage = try scriptContainer.nestedContainer(keyedBy: StorageKeys.self, forKey: .storage).decodeRPC({{ contract.storage_type }}.self, forKey: .{{ contract.key }}){% endif %}{% elif not contract.key %}
+        {% if contract.simple %}{% if contract.key == "set" or contract.key == "list" %}self.storage = try scriptContainer.decodeRPC({{ contract.storage_type }}.self, forKey: .storage){% elif contract.key == "map" or contract.key == "big_map" %}self.storage = try scriptContainer.decode({{ contract.storage_internal_type }}.self, forKey: .storage).map { ($0.first, $0.second) }{% else %}self.storage = try scriptContainer.nestedContainer(keyedBy: StorageKeys.self, forKey: .storage).decodeRPC({{ contract.storage_type }}.self){% endif %}{% elif not contract.key %}
         self.storage = try scriptContainer.nestedContainer(keyedBy: StorageKeys.self, forKey: .storage).decodeRPC({{ contract.storage_type }}.self){% else %}self.storage = try scriptContainer.decode({{ contractName }}StatusStorage.self, forKey: .storage){% endif %}
     }
 }{% if not contract.simple %}

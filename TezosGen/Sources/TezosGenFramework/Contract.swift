@@ -1,39 +1,6 @@
 import Foundation
 
-public struct Contract: Decodable {
-    let parameter: TezosElement
-    let storage: TezosElement
-
-    enum CodingKeys: String, CodingKey {
-        case storage
-        case parameter
-    }
-
-    public init(storage: TezosElement, parameter: TezosElement) {
-        self.storage = storage
-        self.parameter = parameter
-    }
-
-    public init(from decoder: Decoder) throws {
-        let values = try decoder.container(keyedBy: CodingKeys.self)
-        let storage = try values.decode(TezosElement.self, forKey: .storage)
-        let parameter = try values.decode(TezosElement.self, forKey: .parameter)
-        self.init(storage: storage, parameter: parameter)
-    }
-}
-
-extension Contract {
-    public func renderInitToSwift() -> (String, [String]) {
-        return parameter.renderInitToSwift()
-    }
-
-    public func renderArgsToSwift() -> [String] {
-        return storage.renderArgsToSwift()
-    }
-}
-
 public enum TezosPrimaryType: String, Codable {
-    case unit
     case string
     case int
     case nat
@@ -51,8 +18,9 @@ public enum TezosPrimaryType: String, Codable {
     case contract
     case keyHash = "key_hash"
     case mutez
-    case map
+    case map = "map"
     case bigMap = "big_map"
+    case unit
 }
 
 public class TezosElement: Decodable {
@@ -69,7 +37,7 @@ public class TezosElement: Decodable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.type = try container.decode(TezosPrimaryType.self, forKey: .prim)
         switch type {
-        case .pair, .or:
+        case .pair, .or, .map:
             var nestedContainer = try container.nestedUnkeyedContainer(forKey: .args)
             let first = try nestedContainer.decode(TezosElement.self)
             let second = try nestedContainer.decode(TezosElement.self)
@@ -110,14 +78,13 @@ extension TezosElement {
             // TODO: Key type
             return "String"
         case .contract:
-            // TODO: Contract with storace type
+            // TODO: Contract with storage type
             return "String"
         case .keyHash:
             // TODO: Key hash type
             return "String"
         case .mutez:
-            // TODO: Mutez!
-            return "Tez"
+            return "Mutez"
         case .pair:
             guard let first = args.first, let second = args.last else { return "" }
             return "TezosPair<\(first.generatedTypeString), \(second.generatedTypeString)>"
@@ -125,13 +92,12 @@ extension TezosElement {
             guard let first = args.first, let second = args.last else { return "" }
             return "TezosOr<\(first.generatedTypeString), \(second.generatedTypeString)>"
         case .map:
-            // TODO
+            print(args)
             guard let first = args.first, let second = args.last else { return "" }
-            return "(\(first.generatedTypeString)?, \(second.generatedTypeString)?)"
+            return "[TezosPair<\(first.generatedTypeString), \(second.generatedTypeString)>]"
         case .bigMap:
-            // TODO
             guard let first = args.first, let second = args.last else { return "" }
-            return "(\(first.generatedTypeString)?, \(second.generatedTypeString)?)"
+            return "TezosMap<\(first.generatedTypeString), \(second.generatedTypeString)>"
         case .option:
             guard let element = args.first else { return "" }
             return "\(element.generatedTypeString)?"
@@ -142,6 +108,17 @@ extension TezosElement {
             guard let element = args.first else { return "" }
             return "Set<\(element.generatedTypeString)>"
         }
+    }
+
+    public var generatedSwiftTypeString: String {
+        switch type {
+        case .map, .bigMap:
+            guard let first = args.first, let second = args.last else { return "" }
+            return "[(\(first.generatedTypeString), \(second.generatedTypeString))]"
+        default:
+            return generatedTypeString
+        }
+
     }
 
     public var isSimple: Bool {
@@ -157,6 +134,8 @@ extension TezosElement {
 
     public var key: String? {
         switch type {
+        case .keyHash, .contract:
+            return TezosPrimaryType.string.rawValue
         case .option:
             return args.first?.type.rawValue
         default:
@@ -170,7 +149,7 @@ extension TezosElement {
             return generatedTypeString
         default:
             let suffix = optional ? "?" : ""
-            return generatedTypeString + suffix
+            return generatedSwiftTypeString + suffix
         }
     }
 
@@ -233,6 +212,9 @@ extension TezosElement {
             args.first?.renderInitPairElementToSwift(index: &index, renderedInit: &renderedInit, orChecks: &orChecks, suffix: "")
             renderedInit += ", second: "
             args.last?.renderInitPairElementToSwift(index: &index, renderedInit: &renderedInit, orChecks: &orChecks, suffix: ")")
+        case .map:
+            index += 1
+            renderedInit += "param\(index).map { TezosPair(first: $0.0, second: $0.1) }"
         case .or:
             var orCheck = ""
             orCheck += "TezosOr(left: "
@@ -294,5 +276,38 @@ extension TezosElement {
         var args: [String] = []
         renderArgInitElementToSwift(index: &index, currentlyRendered: "tezosElement", args: &args)
         return args
+    }
+}
+
+public struct Contract: Decodable {
+    let parameter: TezosElement
+    let storage: TezosElement
+
+    enum CodingKeys: String, CodingKey {
+        case storage
+        case parameter
+    }
+
+    public init(storage: TezosElement, parameter: TezosElement) {
+        self.storage = storage
+        self.parameter = parameter
+    }
+
+    public init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        let storage = try values.decode(TezosElement.self, forKey: .storage)
+        let parameter = try values.decode(TezosElement.self, forKey: .parameter)
+        self.init(storage: storage, parameter: parameter)
+    }
+}
+
+extension Contract {
+    public func renderToSwift() -> [String] {
+        let params = parameter.renderToSwift()
+        return params
+    }
+
+    public func renderArgsToSwift() -> [String] {
+        return storage.renderArgsToSwift()
     }
 }
