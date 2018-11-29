@@ -56,7 +56,7 @@ struct {{ contractName }}Status: Decodable {
         self.counter = try container.decodeRPC(Int.self, forKey: .counter)
 
         let scriptContainer = try container.nestedContainer(keyedBy: ContractStatusKeys.self, forKey: .script)
-        {% if contract.simple %}{% if contract.key == "set" or contract.key == "list" %}self.storage = try scriptContainer.decodeRPC({{ contract.storage_type }}.self, forKey: .storage){% elif contract.key == "map" or contract.key == "big_map" %}self.storage = try scriptContainer.decode({{ contract.storage_internal_type }}.self, forKey: .storage).map { ($0.first, $0.second) }{% else %}self.storage = try scriptContainer.nestedContainer(keyedBy: StorageKeys.self, forKey: .storage).decodeRPC({{ contract.storage_type }}.self){% endif %}{% elif not contract.key %}
+        {% if contract.simple %}{% if contract.key == "set" or contract.key == "list" %}self.storage = try scriptContainer.decodeRPC({{ contract.storage_type }}.self, forKey: .storage){% elif contract.key == "map" or contract.key == "big_map" %}self.storage = try scriptContainer.decode({{ contract.storage_internal_type }}.self, forKey: .storage).pairs.map { ($0.first, $0.second) }{% else %}self.storage = try scriptContainer.nestedContainer(keyedBy: StorageKeys.self, forKey: .storage).decodeRPC({{ contract.storage_type }}.self){% endif %}{% elif not contract.key %}
         self.storage = try scriptContainer.nestedContainer(keyedBy: StorageKeys.self, forKey: .storage).decodeRPC({{ contract.storage_type }}.self){% else %}self.storage = try scriptContainer.decode({{ contractName }}StatusStorage.self, forKey: .storage){% endif %}
     }
 }{% if not contract.simple %}

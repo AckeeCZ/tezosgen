@@ -92,9 +92,8 @@ extension TezosElement {
             guard let first = args.first, let second = args.last else { return "" }
             return "TezosOr<\(first.generatedTypeString), \(second.generatedTypeString)>"
         case .map:
-            print(args)
             guard let first = args.first, let second = args.last else { return "" }
-            return "[TezosPair<\(first.generatedTypeString), \(second.generatedTypeString)>]"
+            return "TezosMap<\(first.generatedTypeString), \(second.generatedTypeString)>"
         case .bigMap:
             guard let first = args.first, let second = args.last else { return "" }
             return "TezosMap<\(first.generatedTypeString), \(second.generatedTypeString)>"
@@ -214,7 +213,7 @@ extension TezosElement {
             args.last?.renderInitPairElementToSwift(index: &index, renderedInit: &renderedInit, orChecks: &orChecks, suffix: ")")
         case .map:
             index += 1
-            renderedInit += "param\(index).map { TezosPair(first: $0.0, second: $0.1) }"
+            renderedInit += "TezosMap(pairs: param\(index).map { TezosPair(first: $0.0, second: $0.1) })"
         case .or:
             var orCheck = ""
             orCheck += "TezosOr(left: "
