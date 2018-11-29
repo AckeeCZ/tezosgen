@@ -24,18 +24,19 @@ public enum TezosPrimaryType: String, Codable {
 }
 
 public class TezosElement: Decodable {
-    public let name: String = ""
+    public let name: String?
     public let type: TezosPrimaryType
     public let args: [TezosElement]
 
     enum CodingKeys: String, CodingKey {
         case prim
         case args
+        case annots
     }
 
     public required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.type = try container.decode(TezosPrimaryType.self, forKey: .prim)
+        type = try container.decode(TezosPrimaryType.self, forKey: .prim)
         switch type {
         case .pair, .or, .map:
             var nestedContainer = try container.nestedUnkeyedContainer(forKey: .args)
@@ -49,6 +50,9 @@ public class TezosElement: Decodable {
         default:
             args = []
         }
+
+        let annotations = try container.decodeIfPresent([String].self, forKey: .annots)
+        name = annotations?.first?.replacingOccurrences(of: ":", with: "").replacingOccurrences(of: "%", with: "")
     }
 }
 
@@ -142,17 +146,17 @@ extension TezosElement {
         }
     }
 
-    private func renderSimpleToSwift(index: Int, optional: Bool = false) -> String {
+    private func renderSimpleToSwift(index: Int, optional: Bool = false) -> (String, String?) {
         switch type {
         case .option:
-            return generatedTypeString
+            return (generatedTypeString, name)
         default:
             let suffix = optional ? "?" : ""
-            return generatedSwiftTypeString + suffix
+            return (generatedSwiftTypeString + suffix, name)
         }
     }
 
-    private func renderPairElementToSwift(index: inout Int, renderedElements: inout [String], optional: Bool) {
+    private func renderPairElementToSwift(index: inout Int, renderedElements: inout [(String, String?)], optional: Bool) {
         switch type {
         case .pair: renderElementToSwift(index: &index, renderedElements: &renderedElements, optional: optional)
         case .option: args.first?.renderElementToSwift(index: &index, renderedElements: &renderedElements, optional: true)
@@ -162,7 +166,7 @@ extension TezosElement {
         }
     }
 
-    private func renderElementToSwift(index: inout Int, renderedElements: inout [String], optional: Bool = false) {
+    private func renderElementToSwift(index: inout Int, renderedElements: inout [(String, String?)], optional: Bool = false) {
         switch type {
         case .pair:
             args.first?.renderPairElementToSwift(index: &index, renderedElements: &renderedElements, optional: optional)
@@ -184,15 +188,16 @@ extension TezosElement {
         }
     }
 
-    public func renderToSwift() -> [String] {
+    public func renderToSwift() -> [(String, String?)] {
         var index = 0
-        var renderedElements: [String] = []
+        var renderedElements: [(String, String?)] = []
         renderElementToSwift(index: &index, renderedElements: &renderedElements)
         return renderedElements
     }
 
     private func renderSimpleInitToSwift(index: Int, suffix: String) -> String {
-        return "param\(index)" + suffix
+        let paramName = name ?? "param\(index)"
+        return paramName + suffix
     }
 
     private func renderInitPairElementToSwift(index: inout Int, renderedInit: inout String, orChecks: inout [String], suffix: String) {
@@ -262,11 +267,13 @@ extension TezosElement {
                 arg?.args.last?.renderArgInitElementToSwift(index: &index, currentlyRendered: currentlyRendered + "?" + ".right", args: &args)
             } else {
                 index += 1
-                args.append("self.arg\(index) = \(currentlyRendered)")
+                let argName = name ?? "arg\(index)"
+                args.append("self.\(argName) = \(currentlyRendered)")
             }
         default:
             index += 1
-            args.append("self.arg\(index) = \(currentlyRendered)")
+            let argName = name ?? "arg\(index)"
+            args.append("self.\(argName) = \(currentlyRendered)")
         }
     }
 
@@ -297,16 +304,5 @@ public struct Contract: Decodable {
         let storage = try values.decode(TezosElement.self, forKey: .storage)
         let parameter = try values.decode(TezosElement.self, forKey: .parameter)
         self.init(storage: storage, parameter: parameter)
-    }
-}
-
-extension Contract {
-    public func renderToSwift() -> [String] {
-        let params = parameter.renderToSwift()
-        return params
-    }
-
-    public func renderArgsToSwift() -> [String] {
-        return storage.renderArgsToSwift()
     }
 }
