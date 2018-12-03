@@ -81,7 +81,7 @@ open class GenerateCommand: SwiftCLI.Command {
         }
 
         let params = contract.parameter.renderToSwift().enumerated().map { ($1.1 ?? "param\($0 + 1)") + ": \($1.0)" }.joined(separator: ", ")
-        let args = contract.storage.renderToSwift().enumerated().map { ($1.1 ?? "arg\($0 + 1)") + ": \($1.0)"}.joined(separator: "\n\t")
+        let args = contract.storage.renderToSwift().enumerated().map { ($1.1 ?? "let arg\($0 + 1)") + ": \($1.0)"}.joined(separator: "\n\t")
         let renderedInit = contract.parameter.renderInitToSwift()
         let initArgs = contract.storage.renderArgsToSwift().joined(separator: "\n\t\t")
         let environment = Environment(loader: fsLoader, extensions: [stencilSwiftExtension])

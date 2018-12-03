@@ -21,6 +21,7 @@ public enum TezosPrimaryType: String, Codable {
     case map = "map"
     case bigMap = "big_map"
     case unit
+    case address
 }
 
 public class TezosElement: Decodable {
@@ -86,6 +87,9 @@ extension TezosElement {
             return "String"
         case .keyHash:
             // TODO: Key hash type
+            return "String"
+        case .address:
+            // TODO: Address type ě
             return "String"
         case .mutez:
             return "Mutez"

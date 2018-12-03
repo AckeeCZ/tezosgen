@@ -2,6 +2,7 @@
 // swiftlint:disable file_length
 
 import Foundation
+import TezosSwift
 
 struct {{ contractName }}Box {
     fileprivate let tezosClient: TezosClient 
