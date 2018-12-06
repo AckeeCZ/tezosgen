@@ -1,5 +1,5 @@
 Pod::Spec.new do |s|
-    s.name             = 'ContractCodegen'
+    s.name             = 'TezosGen'
     s.version          = '0.1'
     s.summary          = 'Generate code from abi.json'
   
@@ -14,11 +14,11 @@ Pod::Spec.new do |s|
     s.homepage         = 'https://github.com/AckeeCZ/Ethereum-iOS-Dev-Kit'
     s.license          = { :type => 'MIT', :file => 'LICENSE' }
     s.author           = { 'Ackee' => 'info@ackee.cz' }
-    s.source           = { :git => "https://github.com/AckeeCZ/Ethereum-iOS-Dev-Kit.git", :tag => s.version.to_s }
-    s.preserve_paths = 'ContractCodegen/bin/contractgen', 'ContractCodegen/Rakefile', 'ContractCodegen/templates/**', 'ContractCodegen/LICENSE'
+    s.source           = { :git => "https://github.com/AckeeCZ/Tezos-iOS-Dev-Kit.git", :tag => s.version.to_s }
+    s.preserve_paths = 'TezosGen/bin/tezosgen', 'TezosGen/Rakefile', 'TezosGen/templates/**', 'LICENSE'
     s.ios.deployment_target = "10.0"
     s.swift_version = "4.2"
-    s.dependency 'EtherKit', '~> 0.2.0'
+    s.dependency 'TezosSwift'
     s.dependency 'ReactiveSwift', '~> 4.0'        
   end
   

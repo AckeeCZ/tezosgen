@@ -89,7 +89,7 @@ extension TezosElement {
             // TODO: Key hash type
             return "String"
         case .address:
-            // TODO: Address type ě
+            // TODO: Address type
             return "String"
         case .mutez:
             return "Mutez"
