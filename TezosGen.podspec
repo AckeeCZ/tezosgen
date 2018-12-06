@@ -11,14 +11,13 @@ Pod::Spec.new do |s|
   
     s.description      = "Generate code from abi.json using Swift tool."
   
-    s.homepage         = 'https://github.com/AckeeCZ/Ethereum-iOS-Dev-Kit'
+    s.homepage         = 'https://github.com/AckeeCZ/Tezos-iOS-Dev-Kit.git'
     s.license          = { :type => 'MIT', :file => 'LICENSE' }
     s.author           = { 'Ackee' => 'info@ackee.cz' }
     s.source           = { :git => "https://github.com/AckeeCZ/Tezos-iOS-Dev-Kit.git", :tag => s.version.to_s }
     s.preserve_paths = 'TezosGen/bin/tezosgen', 'TezosGen/Rakefile', 'TezosGen/templates/**', 'LICENSE'
     s.ios.deployment_target = "10.0"
     s.swift_version = "4.2"
-    s.dependency 'TezosSwift'
-    s.dependency 'ReactiveSwift', '~> 4.0'        
+    s.dependency 'TezosSwift'     
   end
   
