@@ -4,20 +4,26 @@
 import Foundation
 import TezosSwift
 
+/// Struct for function currying
 struct {{ contractName }}Box {
     fileprivate let tezosClient: TezosClient 
     fileprivate let at: String
 
-    init(tezosClient: TezosClient, at: String) {
+    fileprivate init(tezosClient: TezosClient, at: String) {
        self.tezosClient = tezosClient 
        self.at = at 
     }
 
-    {% if contract.parameter_type != "Void" %}func call({{ contract.params }}) -> ContractMethodInvocation {
+    {% if contract.parameter_type != "Void" %}/**
+     Call {{ contractName }} with specified params.
+     **Important:**
+     Params are in the order of how they are specified in the Tezos structure tree
+    */
+    func call({{ contract.params }}) -> ContractMethodInvocation {
         let send: (_ from: Wallet, _ amount: TezToken, _ completion: @escaping RPCCompletion<String>) -> Void{% if contract.checks %}
         guard {{ contract.checks }} else { 
             send = { from, amount, completion in
-                completion(.failure(.orError))
+                completion(.failure(.parameterError(reason: .orError)))
             }
             return ContractMethodInvocation(send: send)
         }
@@ -34,18 +40,26 @@ struct {{ contractName }}Box {
         }
     }{% endif %}
 
+    /// Call this method to obtain contract status data
 	func status(completion: @escaping RPCCompletion<{% if contract.storage_type != "Void" %}{{ contractName }}Status{% else %}ContractStatus{% endif %}>) {
         let endpoint = "/chains/main/blocks/head/context/contracts/" + at
         tezosClient.sendRPC(endpoint: endpoint, method: .get, completion: completion)
     }
 }
 {% if contract.storage_type != "Void" %}
+/// Status data of {{ contractName }}
 struct {{ contractName }}Status: Decodable {
+    /// Balance of {{ contractName }} in Tezos
     let balance: Tez
+    /// Is contract spendable
     let spendable: Bool
+    /// {{ contractName }}'s manager address
     let manager: String
+    /// {{ contractName }}'s delegate
     let delegate: StatusDelegate
+    /// {{ contractName }}'s current operation counter 
     let counter: Int
+    /// {{ contractName }}'s storage
     let storage: {% if contract.simple %}{{ contract.storage_type }}{% else %}{{ contractName }}StatusStorage{% endif %}
 
     init(from decoder: Decoder) throws {
@@ -62,6 +76,11 @@ struct {{ contractName }}Status: Decodable {
     }
 }{% if not contract.simple %}
 
+/**
+ {{ contractName }}'s storage with specified args.
+ **Important:**
+ Args are in the order of how they are specified in the Tezos structure tree
+*/
 struct {{ contractName }}StatusStorage: Decodable {
 	{{ contract.args }}
 
@@ -73,6 +92,13 @@ struct {{ contractName }}StatusStorage: Decodable {
 }{% endif %}
 {% endif %}
 extension TezosClient {
+    /**
+     This function returns type that you can then use to call {{ contractName }} specified by address.
+
+     - Parameter at: String description of desired address.
+
+     - Returns: Callable type to send Tezos with.
+    */
     func {% filter lowerFirstLetter %}{{ contractName }}{% endfilter %}(at: String) -> {{ contractName }}Box {
         return {{ contractName }}Box(tezosClient: self, at: at)
     }

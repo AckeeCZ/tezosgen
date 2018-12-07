@@ -108,12 +108,9 @@ extension TezosElement {
         case .option:
             guard let element = args.first else { return "" }
             return "\(element.generatedTypeString)?"
-        case .list:
+        case .list, .set:
             guard let element = args.first else { return "" }
             return "[\(element.generatedTypeString)]"
-        case .set:
-            guard let element = args.first else { return "" }
-            return "Set<\(element.generatedTypeString)>"
         }
     }
 
@@ -200,7 +197,10 @@ extension TezosElement {
     }
 
     private func renderSimpleInitToSwift(index: Int, suffix: String) -> String {
-        let paramName = name ?? "param\(index)"
+        var paramName: String = name ?? "param\(index)"
+        if type == .set {
+            paramName += ".sorted()"
+        }
         return paramName + suffix
     }
 
@@ -274,6 +274,10 @@ extension TezosElement {
                 let argName = name ?? "arg\(index)"
                 args.append("self.\(argName) = \(currentlyRendered)")
             }
+        case .set:
+            index += 1
+            let argName = name ?? "arg\(index)"
+            args.append("self.\(argName) = \(currentlyRendered).sorted()")
         default:
             index += 1
             let argName = name ?? "arg\(index)"
