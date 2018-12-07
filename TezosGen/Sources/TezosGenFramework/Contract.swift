@@ -18,7 +18,7 @@ public enum TezosPrimaryType: String, Codable {
     case contract
     case keyHash = "key_hash"
     case mutez
-    case map = "map"
+    case map
     case bigMap = "big_map"
     case unit
     case address

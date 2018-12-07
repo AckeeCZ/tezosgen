@@ -93,7 +93,7 @@ open class GenerateCommand: SwiftCLI.Command {
         if !renderedInit.1.isEmpty {
             contractDict["checks"] = renderedInit.1.enumerated().map { "let tezosOr\($0 + 1) = \($1)" }.joined(separator: ", ")
         }
-        print(contractDict)
+        
         let context: [String: Any] = ["contractName": contractName.value, "contract": contractDict]
 
         do {
