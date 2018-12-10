@@ -20,23 +20,23 @@ struct {{ contractName }}Box {
      Params are in the order of how they are specified in the Tezos structure tree
     */
     func call({{ contract.params }}) -> ContractMethodInvocation {
-        let send: (_ from: Wallet, _ amount: TezToken, _ completion: @escaping RPCCompletion<String>) -> Void{% if contract.checks %}
+        let send: (_ from: Wallet, _ amount: TezToken, _ operationFees: OperationFees?, _ completion: @escaping RPCCompletion<String>) -> Void{% if contract.checks %}
         guard {{ contract.checks }} else { 
-            send = { from, amount, completion in
+            send = { from, amount, operationFees, completion in
                 completion(.failure(.parameterError(reason: .orError)))
             }
             return ContractMethodInvocation(send: send)
         }
         {% endif %}
 		let input: {{ contract.parameter_type }} = {{ contract.init }} 
-        send = { from, amount, completion in
-            self.tezosClient.send(amount: amount, to: self.at, from: from, input: input, completion: completion)
+        send = { from, amount, operationFees, completion in
+            self.tezosClient.send(amount: amount, to: self.at, from: from, input: input, operationFees: operationFees, completion: completion)
         }
 
         return ContractMethodInvocation(send: send)
     }{% else %}func call() -> ContractMethodInvocation {
-        let send: (_ from: Wallet, _ amount: TezToken, _ completion: @escaping RPCCompletion<String>) -> Void = { from, amount, completion in
-            self.tezosClient.send(amount: amount, to: self.at, from: from, completion: completion)
+        let send: (_ from: Wallet, _ amount: TezToken, _ operationFees: OperationFees?, _ completion: @escaping RPCCompletion<String>) -> Void = { from, amount, operationFees, completion in
+            self.tezosClient.send(amount: amount, to: self.at, from: from, operationFees: operationFees, completion: completion)
         }
     }{% endif %}
 
