@@ -58,7 +58,7 @@ We have also created iOS MVVM Project Template, so setting your project has neve
 Easily follow the [installation instructions](https://github.com/AckeeCZ/iOS-MVVM-ProjectTemplate).
 After you are done, add `name_of_your_abi.json` file to `Resources`. Then add `TezosGen` to your `Podfile`, do `pod install` and run this command in your project root directory:
 ```sh
-Pods/TezosGen/TezosGen/bin/contractgen HelloContract NameOfYourProject/Resources/abi.json -x NameOfYourProject.xcodeproj -o NameOfYourProject/Model/Generated/GeneraredContracts
+Pods/TezosGen/TezosGen/bin/tezosgen HelloContract NameOfYourProject/Resources/abi.json -x NameOfYourProject.xcodeproj -o NameOfYourProject/Model/Generated/GeneraredContracts
 ```
 
 ## Usage
