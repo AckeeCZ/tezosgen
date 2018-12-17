@@ -63,6 +63,10 @@ Pods/TezosGen/TezosGen/bin/tezosgen HelloContract NameOfYourProject/Resources/ab
 
 ## Usage
 
+### Example
+
+You can find an example app [here](https://github.com/AckeeCZ/TezosSwift).
+
 ### How to Get Contract Specifcation
 
 To be able to generate smart contract code, we first need to have its specification. To find it, simply run `curl https://url_to_your_node/chains/main/blocks/head/context/contracts/contract_address | tr -d '\n'`.
