@@ -16,7 +16,7 @@ We recommend that you **unarchive the ZIP inside your project directory** and **
 If you unarchived the ZIP file in a folder e.g. called `TezosGen`, you can then invoke it like this:
 
 ```sh
-TezosGen/bin/TezosGen …
+TezosGen/bin/tezosgen …
 ```
 
 ---
@@ -32,7 +32,7 @@ Given that you can specify an exact version for ``TezosGen`` in your `Podfile`, 
 
 You can then invoke TezosGen from your terminal:
 ```sh
-Pods/TezosGen/TezosGen/bin/TezosGen …
+Pods/TezosGen/TezosGen/bin/tezosgen …
 ```
 
 _Note: TezosGen isn't really a pod, as it's not a library your code will depend on at runtime; so the installation via CocoaPods is just a trick that installs the TezosGen binaries in the Pods/ folder, but you won't see any swift files in the Pods/TezosGen group in your Xcode's Pods.xcodeproj. That's normal: the TezosGen binary is still present in that folder in the Finder._
@@ -63,6 +63,27 @@ Pods/TezosGen/TezosGen/bin/tezosgen HelloContract NameOfYourProject/Resources/ab
 
 ## Usage
 
+### How to Get Contract Specifcation
+
+To be able to generate smart contract code, we first need to have its specification. To find it, simply run `curl https://url_to_your_node/chains/main/blocks/head/context/contracts/contract_address | tr -d '\n'`.
+
+The output could look something like this:
+
+```{"manager":"tz1dD918PXDuUHV6Mh6z2QqMukA67YULuhqd","balance":"21000000","spendable":false,"delegate":{"setable":false},"script":{"code":[{"prim":"parameter","args":[{"prim":"set","args":[{"prim":"nat"}]}]},{"prim":"storage","args":[{"prim":"set","args":[{"prim":"nat"}]}]},{"prim":"code","args":[[{"prim":"CDR"},{"prim":"NIL","args":[{"prim":"operation"}]},{"prim":"PAIR"}]]}],"storage":[{"int":"1"},{"int":"2"},{"int":"3"}]},"counter":"0"}```
+
+What we need for our generator is hidden under the `code` key and we need to obtain the parameter and storage. So the specification for this contract, after a little modification, would look like this: 
+
+```{"parameter": {"prim":"set","args":[{"prim":"nat"}]}, "storage": {"prim":"set","args":[{"prim":"nat"}]}}```
+
+To expand on this, the specification should look like this:
+
+```{"parameter": {code_specified_under_args_for_parameter}, "storage": {code_specified_under_args_for_parameter}```
+
+By defaul the parameters are then indexed from number one for better readability, but you can also name your parameters! (and if the values are named in the contract itself, you will get this for free). To do this, it would look like this: 
+```{"parameter": {"prim":"set", "annots":["%first"],"args":[{"prim":"nat"}]}, "storage": {"prim":"set","args":[{"prim":"nat"}]}}```
+
+(that is add to the type a new key-value pair `"annots":["%desired_name"]`)
+
 ### Codegen
 The standard usage looks like this `tezosgen HelloContract path_to_abi/abi.json -x path_to_xcodeproj/project.xcodeproj -o relative_output_path`
 
@@ -88,4 +109,4 @@ tezosClient.optionalStringContract(at: "KT1Rh4iEMxBLJbDbz7iAB6FGLJ3mSCx3qFrW").c
 `wallet` and `tezosClient` should be created with [TezosSwift](https://github.com/AckeeCZ/TezosSwift)
 Also note that right now the created code works with `ReactiveSwift` only.
 
-Result of the call is either a `String` hash of the transaction or an `TezosSwiftError`.
+Result of the call is either a `String` hash of the transaction or an `TezosError`.
