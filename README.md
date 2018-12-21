@@ -1,5 +1,11 @@
 # Tezos iOS Dev Kit
 
+[![CI Status](http://img.shields.io/travis/AckeeCZ/Tezos-iOS-Dev-Kit.svg?style=flat)](https://travis-ci.org/AckeeCZ/Tezos-iOS-Dev-Kit)
+[![Version](https://img.shields.io/cocoapods/v/Tezos-iOS-Dev-Kit.svg?style=flat)](http://cocoapods.org/pods/Tezos-iOS-Dev-Kit)
+[![License](https://img.shields.io/cocoapods/l/Tezos-iOS-Dev-Kit.svg?style=flat)](http://cocoapods.org/pods/Tezos-iOS-Dev-Kit)
+[![Swift Package Manager compatible](https://img.shields.io/badge/SPM-compatible-brightgreen.svg?style=flat&colorA=28a745&&colorB=4E4E4E)](https://github.com/apple/swift-package-manager)
+[![Platform](https://img.shields.io/cocoapods/p/Tezos-iOS-Dev-Kit.svg?style=flat)](http://cocoapods.org/pods/Tezos-iOS-Dev-Kit)
+
 ## Installation
 
 There are multiple possibilities to install TezosGen on your machine or in your project, depending on your preferences and needs. Note that if you do not install `TezosGen` using `Cocoapods`, you will have have to import `TezosSwift` by yourself.
