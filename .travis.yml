@@ -1,0 +1,22 @@
+language: objective-c
+osx_image: xcode10.1
+script:
+- swift test
+- swift build
+- pod lib lint --skip-import-validation --skip-tests --allow-warnings
+before_deploy:
+- swift build --static-swift-stdlib --configuration release
+- export BINARY_PATH=`swift build --show-bin-path --configuration release`/TezosGen
+- mv "$BINARY_PATH" .
+- zip -r tezosgen-$TRAVIS_TAG.zip LICENSE TezosGen
+after_deploy:
+- pod trunk push --skip-import-validation --skip-tests --allow-warnings
+deploy:
+  provider: releases
+  api_key:
+    secure: nHKcEDvGxpo1ykaji20oVTIibAJhLfAU8VbcjweqeBXU10VCygtMg6tReSb/uvOlLuOTj6JEA71uTiDubgrKmKKoRJfjqJ2KvZvd4AownBq6YkX7TbObLJNsn7RYEjC8Dx8CMY+5vq9lXZT6mN+1S1oIkQ75AwY9vTutpYUpFi8rPxATl342nKh69S3YCwQY2L8ivi9seWfHnGhtdb0SkxQUxcvfzF5hA/tVbb/HJrVZGONenZnr25sZ2WhNZdTStwei7SrmpU27XpvVl1HUa1WNgEUvLVgFRhJ8C78m3RYxuOX8vqo2CKtWvegE4jrZj+kJUBolrypKKsroXaBmRppJr86GpJVU6iEx3oGlMl0RpYPbm0I1zvBMAv2Vvhuiq6XHa/w9b+7i4czhf89BBnVHiAjyp1u3oqvLUpCTvzLILcctbSajzydy2UBjZY35ItjN/Vsd/eh4BGDZFt1hFXLKJAT4SMqkhebNWapEYi+A3BQSx/4xVTpzFPDwNgLf5GIeZozwlxJfDRyZRACafZjIhVTYdsVzg5hExdH6gwOa2im2FHEZiUiWHd7ycvzdPndMm8cd2SvqYefUd0VUHf4WBdlapzqpBOMF/zo6Ut+gBIoo91MO95E3TMAfOwgAzwYKxb55NtQPG6bnuoqnPaaVcfovvMgPSNvUJrLSYfc=
+  file: tezosgen-$TRAVIS_TAG.zip
+  skip_cleanup: true
+  on:
+    repo: AckeeCZ/Tezos-iOS-Dev-Kit
+tags: true
