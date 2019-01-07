@@ -8,7 +8,7 @@
 
 ## Installation
 
-There are multiple possibilities to install TezosGen on your machine or in your project, depending on your preferences and needs. Note that if you do not install `TezosGen` using `Cocoapods`, you will have have to import `TezosSwift` by yourself.
+There are multiple possibilities to install TezosGen on your machine or in your project, depending on your preferences and needs. Note that if you do not install `TezosGen` using `Cocoapods`, you will have have to import `TezosSwift` by yourself. 
 
 <details>
 <summary><strong>Download the ZIP</strong> for the latest release</summary>
