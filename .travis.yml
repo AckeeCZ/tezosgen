@@ -1,7 +1,6 @@
 language: objective-c
 osx_image: xcode10.1
 script:
-- swift test
 - swift build
 - pod lib lint --skip-import-validation --skip-tests --allow-warnings
 before_deploy:
