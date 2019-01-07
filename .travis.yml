@@ -4,7 +4,6 @@ script:
 - swift build
 - pod setup
 - pod lib lint --skip-import-validation --skip-tests --allow-warnings
-
 before_deploy:
 - swift build --static-swift-stdlib --configuration release
 - export BINARY_PATH=`swift build --show-bin-path --configuration release`/TezosGen
