@@ -15,9 +15,9 @@ Pod::Spec.new do |s|
     s.license          = { :type => 'MIT', :file => 'LICENSE' }
     s.author           = { 'Ackee' => 'info@ackee.cz' }
     s.source           = { :git => "https://github.com/AckeeCZ/Tezos-iOS-Dev-Kit.git", :tag => s.version.to_s }
-    s.preserve_paths = 'bin/tezosgen', 'Rakefile', 'templates/**', 'LICENSE'
+    s.preserve_paths = 'TezosGen/**', 'LICENSE'
     s.ios.deployment_target = "10.0"
     s.swift_version = "4.2"
-    s.dependency "TezosSwift", "~> 0.1"     
+    s.dependency "TezosSwift", "~> 0.1"
   end
   
