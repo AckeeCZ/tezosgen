@@ -1,7 +1,7 @@
 language: objective-c
 osx_image: xcode10.1
 script:
-- swift builds
+- swift build
 - pod setup && pod lib lint --skip-import-validation --skip-tests --allow-warnings
 before_deploy:
 - swift build --static-swift-stdlib --configuration release
