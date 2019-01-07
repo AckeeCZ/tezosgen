@@ -18,6 +18,6 @@ Pod::Spec.new do |s|
     s.preserve_paths = 'bin/tezosgen', 'Rakefile', 'templates/**', 'LICENSE'
     s.ios.deployment_target = "10.0"
     s.swift_version = "4.2"
-    s.dependency 'TezosSwift'     
+    s.dependency "TezosSwift", "~> 0.1"     
   end
   
