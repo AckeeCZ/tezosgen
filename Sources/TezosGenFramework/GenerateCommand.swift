@@ -73,11 +73,14 @@ open class GenerateCommand: SwiftCLI.Command {
         let stencilSwiftExtension = Extension()
         stencilSwiftExtension.registerStencilSwiftExtensions()
         let fsLoader: FileSystemLoader
-        let relativeTemplatesPath = executableLocation + Path("../templates/")
+
+        let relativeTemplatesPath = executableLocation + Path("../templates")
         if relativeTemplatesPath.exists {
             fsLoader = FileSystemLoader(paths: [relativeTemplatesPath])
+        } else if Path("templates/").exists {
+            fsLoader = FileSystemLoader(paths: [Path("templates/")])
         } else {
-            fsLoader = FileSystemLoader(paths: ["/usr/local/share/tezosgen/templates/"])
+            fsLoader = FileSystemLoader(paths: ["/usr/local/share/tezosgen/templatess/"])
         }
 
         let params = contract.parameter.renderToSwift().enumerated().map { ($1.1 ?? "param\($0 + 1)") + ": \($1.0)" }.joined(separator: ", ")
@@ -98,9 +101,7 @@ open class GenerateCommand: SwiftCLI.Command {
 
         do {
             if !swiftCodePath.exists {
-                print("Did")
                 try FileManager.default.createDirectory(atPath: "\(swiftCodePath.absolute())", withIntermediateDirectories: true, attributes: nil)
-                print("Succeed")
             }
 
             let commonRendered = try environment.renderTemplate(name: "shared_contractgen.stencil")

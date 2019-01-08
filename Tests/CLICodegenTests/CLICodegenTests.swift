@@ -34,11 +34,6 @@ class CommandLineToolTests: XCTestCase {
         let outputPath = "Output/" + generatedContractsString
         XCTAssertEqual(0, generatorCLI.debugGo(with: "generate TestContract abi.json -o \(outputPath)"))
 
-        print(Path.current)
-        print(Path(outputPath))
-        let paths = Path.glob("*")
-        paths.forEach { print($0) }
-
         XCTAssertTrue(Path(outputPath).exists)
         XCTAssertTrue(Path(outputPath + "SharedContract.swift").exists)
         XCTAssertTrue(Path(outputPath + "TestContract.swift").exists)
