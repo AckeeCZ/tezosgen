@@ -20,7 +20,6 @@ open class GenerateCommand: SwiftCLI.Command {
     }
 
     public func execute() throws {
-
         guard let executableLocationString = CommandLine.arguments.first else { return }
         let executableLocation = Path(executableLocationString) + Path("../")
         self.executableLocation = executableLocation
@@ -74,7 +73,7 @@ open class GenerateCommand: SwiftCLI.Command {
         stencilSwiftExtension.registerStencilSwiftExtensions()
         let fsLoader: FileSystemLoader
 
-        let relativeTemplatesPath = executableLocation + Path("../templates")
+        let relativeTemplatesPath = executableLocation + Path("templates")
         if relativeTemplatesPath.exists {
             fsLoader = FileSystemLoader(paths: [relativeTemplatesPath])
         } else if Path("templates/").exists {
@@ -142,7 +141,7 @@ open class GenerateCommand: SwiftCLI.Command {
         let targetsString: String
         let rakeFilePath: Path
         do {
-            let relativeRakefilePath = executableLocation + Path("../Rakefile")
+            let relativeRakefilePath = executableLocation + Path("Rakefile")
             if relativeRakefilePath.exists {
                 rakeFilePath = relativeRakefilePath
             } else {
