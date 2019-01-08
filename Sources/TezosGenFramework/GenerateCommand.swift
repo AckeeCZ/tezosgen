@@ -98,7 +98,9 @@ open class GenerateCommand: SwiftCLI.Command {
 
         do {
             if !swiftCodePath.exists {
+                print("Did")
                 try FileManager.default.createDirectory(atPath: "\(swiftCodePath.absolute())", withIntermediateDirectories: true, attributes: nil)
+                print("Succeed")
             }
 
             let commonRendered = try environment.renderTemplate(name: "shared_contractgen.stencil")
