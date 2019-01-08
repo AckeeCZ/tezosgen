@@ -38,7 +38,7 @@ Given that you can specify an exact version for ``TezosGen`` in your `Podfile`, 
 
 You can then invoke TezosGen from your terminal:
 ```sh
-Pods/TezosGen/TezosGen/bin/tezosgen …
+Pods/TezosGen/TezosGen …
 ```
 
 _Note: TezosGen isn't really a pod, as it's not a library your code will depend on at runtime; so the installation via CocoaPods is just a trick that installs the TezosGen binaries in the Pods/ folder, but you won't see any swift files in the Pods/TezosGen group in your Xcode's Pods.xcodeproj. That's normal: the TezosGen binary is still present in that folder in the Finder._
@@ -64,7 +64,7 @@ We have also created iOS MVVM Project Template, so setting your project has neve
 Easily follow the [installation instructions](https://github.com/AckeeCZ/iOS-MVVM-ProjectTemplate).
 After you are done, add `name_of_your_abi.json` file to `Resources`. Then add `TezosGen` to your `Podfile`, do `pod install` and run this command in your project root directory:
 ```sh
-Pods/TezosGen/TezosGen/bin/tezosgen HelloContract NameOfYourProject/Resources/abi.json -x NameOfYourProject.xcodeproj -o NameOfYourProject/Model/Generated/GeneraredContracts
+Pods/TezosGen/TezosGen HelloContract NameOfYourProject/Resources/abi.json -x NameOfYourProject.xcodeproj -o NameOfYourProject/Model/Generated/GeneraredContracts
 ```
 
 ## Usage
