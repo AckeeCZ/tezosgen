@@ -18,6 +18,6 @@ Pod::Spec.new do |s|
     s.preserve_paths = 'TezosGen/**', 'LICENSE'
     s.ios.deployment_target = "10.0"
     s.swift_version = "4.2"
-    s.dependency 'TezosSwift', '~> 1.0'ě
+    s.dependency 'TezosSwift', '~> 1.0'
   end
   
