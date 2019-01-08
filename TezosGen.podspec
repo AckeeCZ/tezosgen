@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
     s.name             = 'TezosGen'
-    s.version          = '0.2'
+    s.version          = '1.0'
     s.summary          = 'Generate code from abi.json'
   
   # This description is used to generate tags and improve search results.
@@ -18,6 +18,6 @@ Pod::Spec.new do |s|
     s.preserve_paths = 'TezosGen/**', 'LICENSE'
     s.ios.deployment_target = "10.0"
     s.swift_version = "4.2"
-    s.dependency 'TezosSwift', '~> 0.1'
+    s.dependency 'TezosSwift', '~> 1.0'ě
   end
   
