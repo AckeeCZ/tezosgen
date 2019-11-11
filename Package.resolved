@@ -6,8 +6,8 @@
         "repositoryURL": "https://github.com/kylef/PathKit.git",
         "state": {
           "branch": null,
-          "revision": "fa81fa9e3a9f59645159c4ea45c0c46ee6558f71",
-          "version": "0.9.1"
+          "revision": "e2f5be30e4c8f531c9c1e8765aa7b71c0a45d7a0",
+          "version": "0.9.2"
         }
       },
       {
@@ -15,17 +15,17 @@
         "repositoryURL": "https://github.com/kylef/Spectre.git",
         "state": {
           "branch": null,
-          "revision": "e34d5687e1e9d865e3527dd58bc2f7464ef6d936",
-          "version": "0.8.0"
+          "revision": "f14ff47f45642aa5703900980b014c2e9394b6e5",
+          "version": "0.9.0"
         }
       },
       {
         "package": "Stencil",
-        "repositoryURL": "https://github.com/kylef/Stencil.git",
+        "repositoryURL": "https://github.com/stencilproject/Stencil.git",
         "state": {
           "branch": null,
-          "revision": "b476e50f89577f5848e8013dbf0a850abac892aa",
-          "version": "0.12.1"
+          "revision": "0e9a78d6584e3812cd9c09494d5c7b483e8f533c",
+          "version": "0.13.1"
         }
       },
       {
@@ -33,8 +33,8 @@
         "repositoryURL": "https://github.com/SwiftGen/StencilSwiftKit",
         "state": {
           "branch": null,
-          "revision": "17e6ae91838afb90ab873194e45fa5b01731e322",
-          "version": "2.6.0"
+          "revision": "dbf02bd6afe71b65ead2bd250aaf974abc688094",
+          "version": "2.7.2"
         }
       },
       {
@@ -42,8 +42,8 @@
         "repositoryURL": "https://github.com/jakeheis/SwiftCLI",
         "state": {
           "branch": null,
-          "revision": "37f4a7f863f6fe76ce44fc0023f331eea0089beb",
-          "version": "5.2.0"
+          "revision": "df4d5b3ec2c1421a58d71010ff43528db5b19e04",
+          "version": "5.3.3"
         }
       }
     ]

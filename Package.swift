@@ -11,9 +11,9 @@ let package = Package(
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
-        .package(url: "https://github.com/jakeheis/SwiftCLI", .upToNextMinor(from: "5.2.0")),
-        .package(url: "https://github.com/kylef/PathKit.git", .upToNextMinor(from: "0.9.1")),
-        .package(url: "https://github.com/SwiftGen/StencilSwiftKit", .upToNextMinor(from: "2.6.0"))
+        .package(url: "https://github.com/jakeheis/SwiftCLI", .upToNextMajor(from: "5.2.0")),
+        .package(url: "https://github.com/kylef/PathKit.git", .upToNextMajor(from: "0.9.1")),
+        .package(url: "https://github.com/SwiftGen/StencilSwiftKit", .upToNextMajor(from: "2.6.0"))
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
