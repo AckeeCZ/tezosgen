@@ -6,6 +6,7 @@ import class TuistSupport.System
 import Foundation
 import SPMUtility
 import TezosGenCore
+import TezosGenGenerator
 import XcodeProj
 import PathKit
 
@@ -15,13 +16,19 @@ final class GenerateCommand: NSObject, Command {
     static var command: String = "generate"
     static var overview: String = "Generates Swift code for contract"
 
-    let contractNameArgument: PositionalArgument<String>
-    let fileArgument: PositionalArgument<String>
-    let outputArgument: OptionArgument<String>
-    let xcodeArgument: OptionArgument<String>
-    var executableLocation = FileHandler.shared.currentPath
+    private let contractNameArgument: PositionalArgument<String>
+    private let fileArgument: PositionalArgument<String>
+    private let outputArgument: OptionArgument<String>
+    private let xcodeArgument: OptionArgument<String>
+    private let contractCodeGenerator: ContractCodeGenerating
 
-    required init(parser: ArgumentParser) {
+    convenience init(parser: ArgumentParser) {
+        self.init(parser: parser,
+                  contractCodeGenerator: ContractCodeGenerator())
+    }
+    
+    init(parser: ArgumentParser,
+         contractCodeGenerator: ContractCodeGenerating) {
         let subParser = parser.add(subparser: GenerateCommand.command, overview: GenerateCommand.overview)
         
         contractNameArgument = subParser.add(positional: "contract name", kind: String.self)
@@ -36,6 +43,7 @@ final class GenerateCommand: NSObject, Command {
                                       kind: String.self,
                                       usage: "Define location of .xcodeproj",
                                       completion: .filename)
+        self.contractCodeGenerator = contractCodeGenerator
     }
 
     func run(with arguments: ArgumentParser.Result) throws {
@@ -63,76 +71,31 @@ final class GenerateCommand: NSObject, Command {
             projectPath = AbsolutePath(projectPathString)
         }
 
-        var generatedSwiftCodePath: AbsolutePath?
+        let generatedSwiftCodePath: AbsolutePath = self.generatedSwiftCodePath(outputValue: arguments.get(outputArgument),
+                                                                               xcodePath: arguments.get(xcodeArgument))
 
-        if let outputValue = arguments.get(outputArgument) {
-            if let xcodePath = arguments.get(xcodeArgument) {
-                var xcodeComponents = xcodePath.components(separatedBy: "/")
-                xcodeComponents.remove(at: xcodeComponents.endIndex - 1)
-                generatedSwiftCodePath = AbsolutePath(xcodeComponents.joined(separator: "/")).appending(RelativePath(outputValue))
-            } else {
-                generatedSwiftCodePath = AbsolutePath(outputValue)
-            }
-        }
-
-        writeGeneratedCode(to: generatedSwiftCodePath, contract: contract, contractName: contractName)
+        try contractCodeGenerator.generateContract(path: generatedSwiftCodePath, contract: contract, contractName: contractName)
+        try contractCodeGenerator.generateSharedContract(path: generatedSwiftCodePath)
 
         // Do not bind files when project or swift code path is not given
         guard
             let xcodePath = projectPath,
-            let swiftCodePath = generatedSwiftCodePath,
             let relativePathValue = arguments.get(outputArgument)
         else { return }
-        try bindFilesWithProject(xcodePath: xcodePath, swiftCodePath: swiftCodePath, relativePathValue: relativePathValue)
+        try bindFilesWithProject(xcodePath: xcodePath, swiftCodePath: generatedSwiftCodePath, relativePathValue: relativePathValue)
     }
-
-    /// Writes and renders code from .stencil files to a given directory
-    private func writeGeneratedCode(to path: AbsolutePath?, contract: Contract, contractName: String) {
-
-        let swiftCodePath = path ?? (FileHandler.shared.currentPath.appending(component: "GeneratedConctracts"))
-
-        let params = contract.parameter.renderToSwift().enumerated().map { ($1.1 ?? "param\($0 + 1)") + ": \($1.0)" }.joined(separator: ", ")
-        let args = contract.storage.renderToSwift().enumerated().map { ($1.1 ?? "let arg\($0 + 1)") + ": \($1.0)"}.joined(separator: "\n\t")
-        let renderedInit = contract.parameter.renderInitToSwift()
-        let initArgs = contract.storage.renderArgsToSwift().joined(separator: "\n\t\t")
-        
-//        var contractDict: [String: Any] = ["params": params, "args": args, "storage_type": contract.storage.generatedSwiftTypeString, "storage_internal_type": contract.storage.generatedTypeString, "parameter_type": contract.parameter.generatedTypeString, "init": renderedInit.0, "init_args": initArgs, "simple": contract.storage.isSimple]
-        let key: String?
-        if let keyString = contract.storage.key {
-            key = keyString
-        } else {
-            key = nil
-        }
-
-        let checks: String?
-        if !renderedInit.1.isEmpty {
-            checks = renderedInit.1.enumerated().map { "let tezosOr\($0 + 1) = \($1)" }.joined(separator: ", ")
-        } else {
-            checks = nil
-        }
-
-        do {
-            if !FileHandler.shared.exists(swiftCodePath) {
-                try FileManager.default.createDirectory(atPath: "\(swiftCodePath.pathString)", withIntermediateDirectories: true, attributes: nil)
+    
+    private func generatedSwiftCodePath(outputValue: String?, xcodePath: String?) -> AbsolutePath {
+        if let outputValue = outputValue {
+            if let xcodePath = xcodePath {
+                var xcodeComponents = xcodePath.components(separatedBy: "/")
+                xcodeComponents.remove(at: xcodeComponents.endIndex - 1)
+                return AbsolutePath(xcodeComponents.joined(separator: "/")).appending(RelativePath(outputValue))
+            } else {
+                return AbsolutePath(outputValue)
             }
-
-            try createSharedContract(path: swiftCodePath)
-            
-            try generateFile(path: swiftCodePath,
-                         contractName: contractName,
-                         arguments: args,
-                         storageType: contract.storage.generatedSwiftTypeString,
-                         storageInternalType: contract.storage.generatedTypeString,
-                         paramaterType: contract.parameter.generatedTypeString,
-                         contractParams: params,
-                         checks: checks,
-                         contractInit: renderedInit.0,
-                         contractInitArguments: initArgs,
-                         isSimple: contract.storage.isSimple,
-                         key: key)
-        } catch {
-            Printer.shared.print(error: "Write Error! 😱")
-            return
+        } else {
+            return FileHandler.shared.currentPath.appending(component: "GeneratedContracts")
         }
     }
     
@@ -163,252 +126,18 @@ final class GenerateCommand: NSObject, Command {
         let outputGroup: PBXGroup? = try relativePathComponents.reduce(into: nil, { result, name in
             if let group = xcodeproj.pbxproj.groups.first(where: { $0.path == name }) {
                 result = group
-                return
+            } else {
+                result = try result?.addGroup(named: name).first
             }
-
-            result = try result?.addGroup(named: name).first
         })
-        
-        let rootPath = xcodePath.removingLastComponent()
-        
-        try outputGroup?.addFile(at: "HelloContract.swift", sourceRoot: xcodePath.removingLastComponent().path)
+                
+        let target = try chooseTargetIndex(from: xcodeproj.pbxproj.nativeTargets)
         try xcodeproj.write(path: Path(xcodePath.pathString))
-    }
-    
-    private func createSharedContract(path: AbsolutePath) throws {
-        let contents = """
-        // Generated using TezosGen
-
-        import TezosSwift
-
-        struct ContractMethodInvocation {
-            private let send: (_ from: Wallet, _ amount: TezToken, _ operationFees: OperationFees?, _ completion: @escaping RPCCompletion<String>) -> Void
-
-            init(send: @escaping (_ from: Wallet, _ amount: TezToken, _ operationFees: OperationFees?, _ completion: @escaping RPCCompletion<String>) -> Void) {
-                self.send = send
-            }
-
-            func send(from: Wallet, amount: TezToken, operationFees: OperationFees? = nil, completion: @escaping RPCCompletion<String>) {
-                self.send(from, amount, operationFees, completion)
-            }
+        
+        if let contractFile = try outputGroup?.addFile(at: swiftCodePath.appending(component: "HelloContract.swift").path, sourceRoot: xcodePath.removingLastComponent().path) {
+            let _ = try target.sourcesBuildPhase()?.add(file: contractFile)
         }
-        """
-        
-        let sharedContractPath = path.appending(component: "SharedContract.swift")
-        try FileHandler.shared.write(contents, path: sharedContractPath, atomically: true)
-    }
-
-    func generateFile(path: AbsolutePath,
-                      contractName: String,
-                      arguments: String,
-                      storageType: String,
-                      storageInternalType: String,
-                      paramaterType: String?,
-                      contractParams: String,
-                      checks: String?,
-                      contractInit: String,
-                      contractInitArguments: String,
-                      isSimple: Bool,
-                      key: String?) throws {
-        var contents = """
-        // Generated using TezosGen
-        // swiftlint:disable file_length
-
-        import Foundation
-        import TezosSwift
-
-        /// Struct for function currying
-        struct \(contractName)Box {
-            fileprivate let tezosClient: TezosClient
-            fileprivate let at: String
-
-            fileprivate init(tezosClient: TezosClient, at: String) {
-               self.tezosClient = tezosClient
-               self.at = at
-            }
-        """
-        if let paramaterType = paramaterType {
-            contents +=
-            """
-                
-                
-                /**
-                 Call \(contractName) with specified params.
-                 **Important:**
-                 Params are in the order of how they are specified in the Tezos structure tree
-                */
-                func call(\(contractParams) -> ContractMethodInvocation {
-                    let send: (_ from: Wallet, _ amount: TezToken, _ operationFees: OperationFees?, _ completion: @escaping RPCCompletion<String>) -> Void
-            """
-            if let checks = checks {
-                contents +=
-                """
-                    guard \(checks) else {
-                        send = { from, amount, operationFees, completion in
-                            completion(.failure(.parameterError(reason: .orError)))
-                        }
-                        return ContractMethodInvocation(send: send)
-                    }
-                """
-            }
-            contents +=
-            """
-                
-                    let input: \(paramaterType) = \(contractInit)
-                    send = { from, amount, operationFees, completion in
-                        self.tezosClient.send(amount: amount, to: self.at, from: from, input: input, operationFees: operationFees, completion: completion)
-                    }
-
-                    return ContractMethodInvocation(send: send)
-                }
-            """
-        } else {
-            contents +=
-            """
-                func call() -> ContractMethodInvocation {
-                    let send: (_ from: Wallet, _ amount: TezToken, _ operationFees: OperationFees?, _ completion: @escaping RPCCompletion<String>) -> Void = { from, amount, operationFees, completion in
-                        self.tezosClient.send(amount: amount, to: self.at, from: from, operationFees: operationFees, completion: completion)
-                    }
-                }
-            """
-        }
-        contents +=
-        """
-        
-        
-            /// Call this method to obtain contract status data
-            func status(completion: @escaping RPCCompletion<
-        """
-        
-        
-        if storageType != "Void" {
-            contents += """
-            \(contractName)Status
-            """
-        } else {
-            contents += """
-            ContractStatus
-            """
-        }
-        
-        contents += """
-        >) {
-                let endpoint = "/chains/main/blocks/head/context/contracts/" + at
-                tezosClient.sendRPC(endpoint: endpoint, method: .get, completion: completion)
-            }
-        }
-        """
-        
-        if storageType != "Void" {
-            contents += """
-            
-            
-            /// Status data of \(contractName)
-            struct \(contractName)Status: Decodable {
-                /// Balance of \(contractName) in Tezos
-                let balance: Tez
-                /// Is contract spendable
-                let spendable: Bool
-                /// \(contractName)'s manager address
-                let manager: String
-                /// \(contractName)'s delegate
-                let delegate: StatusDelegate
-                /// \(contractName)'s current operation counter
-                let counter: Int
-                /// \(contractName)'s storage
-                let storage: 
-            """
-            if isSimple {
-                contents += """
-                \(storageType)
-                """
-            } else {
-                contents += """
-                \(contractName)StatusStorage
-                """
-            }
-            contents += """
-            
-            
-                init(from decoder: Decoder) throws {
-                    let container = try decoder.container(keyedBy: ContractStatusKeys.self)
-                    self.balance = try container.decode(Tez.self, forKey: .balance)
-                    self.spendable = try container.decode(Bool.self, forKey: .spendable)
-                    self.manager = try container.decode(String.self, forKey: .manager)
-                    self.delegate = try container.decode(StatusDelegate.self, forKey: .delegate)
-                    self.counter = try container.decodeRPC(Int.self, forKey: .counter)
-
-                    let scriptContainer = try container.nestedContainer(keyedBy: ContractStatusKeys.self, forKey: .script)
-            """
-            if isSimple {
-                if key == "set" || key == "list" {
-                    contents += """
-                    self.storage = try scriptContainer.decodeRPC(\(storageType).self, forKey: .storage)
-                    """
-                } else if key == "map" || key == "big_map" {
-                    contents += """
-                    self.storage = try scriptContainer.decode(\(storageInternalType).self, forKey: .storage).pairs.map { ($0.first, $0.second) }
-                    """
-                } else {
-                    contents += """
-                    self.storage = try scriptContainer.nestedContainer(keyedBy: StorageKeys.self, forKey: .storage).decodeRPC(\(storageType)).self)
-                    """
-                }
-            } else if key == nil {
-                contents += """
-                self.storage = try scriptContainer.nestedContainer(keyedBy: StorageKeys.self, forKey: .storage).decodeRPC(\(storageType).self)
-                """
-            } else {
-                contents += """
-                self.storage = try scriptContainer.decode(\(contractName)StatusStorage.self, forKey: .storage)
-                """
-            }
-            contents += """
-            
-                }
-            }
-            """
-            
-            if !isSimple {
-                contents += """
-                
-                /**
-                 \(contractName)'s storage with specified args.
-                 **Important:**
-                 Args are in the order of how they are specified in the Tezos structure tree
-                */
-                struct \(contractName)StatusStorage: Decodable {
-                    \(arguments)
-
-                    public init(from decoder: Decoder) throws {
-                        let tezosElement = try decoder.singleValueContainer().decode(\(storageType).self)
-
-                        \(contractInitArguments)
-                    }
-                }
-                """
-            }
-        }
-        
-        contents += """
-        
-        
-        extension TezosClient {
-            /**
-             This function returns type that you can then use to call \(contractName) specified by address.
-
-             - Parameter at: String description of desired address.
-
-             - Returns: Callable type to send Tezos with.
-            */
-            func \(contractName.lowercased())(at: String) -> \(contractName)Box {
-                return \(contractName)Box(tezosClient: self, at: at)
-            }
-        }
-        """
-        
-        let contractPath = FileHandler.shared.currentPath.appending(component: contractName + ".swift")
-        try FileHandler.shared.write(contents, path: contractPath, atomically: true)
+        try xcodeproj.write(path: Path(xcodePath.pathString))
     }
 }
 

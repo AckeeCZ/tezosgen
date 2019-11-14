@@ -24,9 +24,15 @@ let package = Package(
                 "TuistGenerator"
             ]),
         .target(
+            name: "TezosGenGenerator",
+            dependencies: [
+                "TezosGenCore"
+            ]),
+        .target(
             name: "TezosGenKit",
             dependencies: [
                 "TezosGenCore",
+                "TezosGenGenerator",
             ]),
         .testTarget(
             name: "TezosGenKitTests",
