@@ -230,6 +230,8 @@ final class GenerateCommand: NSObject, Command {
         if let paramaterType = paramaterType {
             contents +=
             """
+                
+                
                 /**
                  Call \(contractName) with specified params.
                  **Important:**
@@ -251,12 +253,13 @@ final class GenerateCommand: NSObject, Command {
             }
             contents +=
             """
-                let input: \(paramaterType) = \(contractInit)
-                send = { from, amount, operationFees, completion in
-                    self.tezosClient.send(amount: amount, to: self.at, from: from, input: input, operationFees: operationFees, completion: completion)
-                }
+                
+                    let input: \(paramaterType) = \(contractInit)
+                    send = { from, amount, operationFees, completion in
+                        self.tezosClient.send(amount: amount, to: self.at, from: from, input: input, operationFees: operationFees, completion: completion)
+                    }
 
-                return ContractMethodInvocation(send: send)
+                    return ContractMethodInvocation(send: send)
                 }
             """
         } else {
@@ -271,72 +274,138 @@ final class GenerateCommand: NSObject, Command {
         }
         contents +=
         """
+        
+        
             /// Call this method to obtain contract status data
-            func status(completion: @escaping RPCCompletion<{% if contract.storage_type != "Void" %}{{ contractName }}Status{% else %}ContractStatus{% endif %}>) {
+            func status(completion: @escaping RPCCompletion<
+        """
+        
+        
+        if storageType != "Void" {
+            contents += """
+            \(contractName)Status
+            """
+        } else {
+            contents += """
+            ContractStatus
+            """
+        }
+        
+        contents += """
+        >) {
                 let endpoint = "/chains/main/blocks/head/context/contracts/" + at
                 tezosClient.sendRPC(endpoint: endpoint, method: .get, completion: completion)
             }
+        }
         """
+        
+        if storageType != "Void" {
+            contents += """
             
-//        }
-//        {% if contract.storage_type != "Void" %}
-//        /// Status data of {{ contractName }}
-//        struct {{ contractName }}Status: Decodable {
-//            /// Balance of {{ contractName }} in Tezos
-//            let balance: Tez
-//            /// Is contract spendable
-//            let spendable: Bool
-//            /// {{ contractName }}'s manager address
-//            let manager: String
-//            /// {{ contractName }}'s delegate
-//            let delegate: StatusDelegate
-//            /// {{ contractName }}'s current operation counter
-//            let counter: Int
-//            /// {{ contractName }}'s storage
-//            let storage: {% if contract.simple %}{{ contract.storage_type }}{% else %}{{ contractName }}StatusStorage{% endif %}
-//
-//            init(from decoder: Decoder) throws {
-//                let container = try decoder.container(keyedBy: ContractStatusKeys.self)
-//                self.balance = try container.decode(Tez.self, forKey: .balance)
-//                self.spendable = try container.decode(Bool.self, forKey: .spendable)
-//                self.manager = try container.decode(String.self, forKey: .manager)
-//                self.delegate = try container.decode(StatusDelegate.self, forKey: .delegate)
-//                self.counter = try container.decodeRPC(Int.self, forKey: .counter)
-//
-//                let scriptContainer = try container.nestedContainer(keyedBy: ContractStatusKeys.self, forKey: .script)
-//                {% if contract.simple %}{% if contract.key == "set" or contract.key == "list" %}self.storage = try scriptContainer.decodeRPC({{ contract.storage_type }}.self, forKey: .storage){% elif contract.key == "map" or contract.key == "big_map" %}self.storage = try scriptContainer.decode({{ contract.storage_internal_type }}.self, forKey: .storage).pairs.map { ($0.first, $0.second) }{% else %}self.storage = try scriptContainer.nestedContainer(keyedBy: StorageKeys.self, forKey: .storage).decodeRPC({{ contract.storage_type }}.self){% endif %}{% elif not contract.key %}
-//                self.storage = try scriptContainer.nestedContainer(keyedBy: StorageKeys.self, forKey: .storage).decodeRPC({{ contract.storage_type }}.self){% else %}self.storage = try scriptContainer.decode({{ contractName }}StatusStorage.self, forKey: .storage){% endif %}
-//            }
-//        }{% if not contract.simple %}
-//
-//        /**
-//         {{ contractName }}'s storage with specified args.
-//         **Important:**
-//         Args are in the order of how they are specified in the Tezos structure tree
-//        */
-//        struct {{ contractName }}StatusStorage: Decodable {
-//            {{ contract.args }}
-//
-//            public init(from decoder: Decoder) throws {
-//                let tezosElement = try decoder.singleValueContainer().decode({{ contract.storage_type }}.self)
-//
-//                {{ contract.init_args }}
-//            }
-//        }{% endif %}
-//        {% endif %}
-//        extension TezosClient {
-//            /**
-//             This function returns type that you can then use to call {{ contractName }} specified by address.
-//
-//             - Parameter at: String description of desired address.
-//
-//             - Returns: Callable type to send Tezos with.
-//            */
-//            func {% filter lowerFirstLetter %}{{ contractName }}{% endfilter %}(at: String) -> {{ contractName }}Box {
-//                return {{ contractName }}Box(tezosClient: self, at: at)
-//            }
-//        }
-//        """
+            
+            /// Status data of \(contractName)
+            struct \(contractName)Status: Decodable {
+                /// Balance of \(contractName) in Tezos
+                let balance: Tez
+                /// Is contract spendable
+                let spendable: Bool
+                /// \(contractName)'s manager address
+                let manager: String
+                /// \(contractName)'s delegate
+                let delegate: StatusDelegate
+                /// \(contractName)'s current operation counter
+                let counter: Int
+                /// \(contractName)'s storage
+                let storage: 
+            """
+            if isSimple {
+                contents += """
+                \(storageType)
+                """
+            } else {
+                contents += """
+                \(contractName)StatusStorage
+                """
+            }
+            contents += """
+            
+            
+                init(from decoder: Decoder) throws {
+                    let container = try decoder.container(keyedBy: ContractStatusKeys.self)
+                    self.balance = try container.decode(Tez.self, forKey: .balance)
+                    self.spendable = try container.decode(Bool.self, forKey: .spendable)
+                    self.manager = try container.decode(String.self, forKey: .manager)
+                    self.delegate = try container.decode(StatusDelegate.self, forKey: .delegate)
+                    self.counter = try container.decodeRPC(Int.self, forKey: .counter)
+
+                    let scriptContainer = try container.nestedContainer(keyedBy: ContractStatusKeys.self, forKey: .script)
+            """
+            if isSimple {
+                if key == "set" || key == "list" {
+                    contents += """
+                    self.storage = try scriptContainer.decodeRPC(\(storageType).self, forKey: .storage)
+                    """
+                } else if key == "map" || key == "big_map" {
+                    contents += """
+                    self.storage = try scriptContainer.decode(\(storageInternalType).self, forKey: .storage).pairs.map { ($0.first, $0.second) }
+                    """
+                } else {
+                    contents += """
+                    self.storage = try scriptContainer.nestedContainer(keyedBy: StorageKeys.self, forKey: .storage).decodeRPC(\(storageType)).self)
+                    """
+                }
+            } else if key == nil {
+                contents += """
+                self.storage = try scriptContainer.nestedContainer(keyedBy: StorageKeys.self, forKey: .storage).decodeRPC(\(storageType).self)
+                """
+            } else {
+                contents += """
+                self.storage = try scriptContainer.decode(\(contractName)StatusStorage.self, forKey: .storage)
+                """
+            }
+            contents += """
+            
+                }
+            }
+            """
+            
+            if !isSimple {
+                contents += """
+                
+                /**
+                 \(contractName)'s storage with specified args.
+                 **Important:**
+                 Args are in the order of how they are specified in the Tezos structure tree
+                */
+                struct \(contractName)StatusStorage: Decodable {
+                    \(arguments)
+
+                    public init(from decoder: Decoder) throws {
+                        let tezosElement = try decoder.singleValueContainer().decode(\(storageType).self)
+
+                        \(contractInitArguments)
+                    }
+                }
+                """
+            }
+        }
+        
+        contents += """
+        
+        
+        extension TezosClient {
+            /**
+             This function returns type that you can then use to call \(contractName) specified by address.
+
+             - Parameter at: String description of desired address.
+
+             - Returns: Callable type to send Tezos with.
+            */
+            func \(contractName.lowercased())(at: String) -> \(contractName)Box {
+                return \(contractName)Box(tezosClient: self, at: at)
+            }
+        }
+        """
         
         let contractPath = FileHandler.shared.currentPath.appending(component: contractName + ".swift")
         try FileHandler.shared.write(contents, path: contractPath, atomically: true)
