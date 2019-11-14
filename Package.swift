@@ -29,10 +29,16 @@ let package = Package(
                 "TezosGenCore"
             ]),
         .target(
+            name: "TezosGenUtils",
+            dependencies: [
+            "TezosGenCore"
+        ]),
+        .target(
             name: "TezosGenKit",
             dependencies: [
                 "TezosGenCore",
                 "TezosGenGenerator",
+                "TezosGenUtils",
             ]),
         .testTarget(
             name: "TezosGenKitTests",

@@ -7,6 +7,7 @@ import Foundation
 import SPMUtility
 import TezosGenCore
 import TezosGenGenerator
+import TezosGenUtils
 import XcodeProj
 import PathKit
 
@@ -49,6 +50,7 @@ final class GenerateCommand: NSObject, Command {
     func run(with arguments: ArgumentParser.Result) throws {
         guard let file = arguments.get(fileArgument) else { return }
         guard let contractName = arguments.get(contractNameArgument) else { fatalError() }
+        
         // TODO: Fix for relative
         let filePath = AbsolutePath(file)
         guard FileHandler.shared.exists(filePath) else {
@@ -80,9 +82,20 @@ final class GenerateCommand: NSObject, Command {
         // Do not bind files when project or swift code path is not given
         guard
             let xcodePath = projectPath,
-            let relativePathValue = arguments.get(outputArgument)
-        else { return }
-        try bindFilesWithProject(xcodePath: xcodePath, swiftCodePath: generatedSwiftCodePath, relativePathValue: relativePathValue)
+            let outputPathString = arguments.get(outputArgument)
+        else { fatalError() }
+        let outputPath = RelativePath(outputPathString)
+        
+        let targets = try XcodeProjectController.shared.targets(projectPath: xcodePath)
+        let target = try chooseTargetIndex(from: targets)
+        
+        let contractPath = generatedSwiftCodePath.appending(component: contractName + ".swift")
+        let sharedContractPath = generatedSwiftCodePath.appending(component: "SharedContract.swift")
+        
+        try XcodeProjectController.shared.addFilesAndGroups(xcodePath: xcodePath,
+                                                            outputPath: outputPath,
+                                                            files: [contractPath, sharedContractPath],
+                                                            target: target)
     }
     
     private func generatedSwiftCodePath(outputValue: String?, xcodePath: String?) -> AbsolutePath {
@@ -116,28 +129,6 @@ final class GenerateCommand: NSObject, Command {
         }
         
         return targets[index - 1]
-    }
-
-    /// Binds file references with project, adds files to target
-    private func bindFilesWithProject(xcodePath: AbsolutePath, swiftCodePath: AbsolutePath, relativePathValue: String) throws {
-        let xcodeproj = try XcodeProj(pathString: xcodePath.pathString)
-        let relativePathComponents = relativePathValue.components(separatedBy: "/")
-        
-        let outputGroup: PBXGroup? = try relativePathComponents.reduce(into: nil, { result, name in
-            if let group = xcodeproj.pbxproj.groups.first(where: { $0.path == name }) {
-                result = group
-            } else {
-                result = try result?.addGroup(named: name).first
-            }
-        })
-                
-        let target = try chooseTargetIndex(from: xcodeproj.pbxproj.nativeTargets)
-        try xcodeproj.write(path: Path(xcodePath.pathString))
-        
-        if let contractFile = try outputGroup?.addFile(at: swiftCodePath.appending(component: "HelloContract.swift").path, sourceRoot: xcodePath.removingLastComponent().path) {
-            let _ = try target.sourcesBuildPhase()?.add(file: contractFile)
-        }
-        try xcodeproj.write(path: Path(xcodePath.pathString))
     }
 }
 
