@@ -1,9 +1,9 @@
 require 'xcodeproj'
 require 'fileutils'
 
-namespace :xcode do  
+namespace :xcode do
 
-  task :find_targets, [:project_path] do |t, args| 
+  task :find_targets, [:project_path] do |t, args|
     project_path = args.project_path
     project = Xcodeproj::Project.open(project_path)
 
@@ -11,7 +11,7 @@ namespace :xcode do
     project.targets.each do |target|
       targets.push(target.name)
     end
-    puts targets 
+    puts targets
   end
 
   task :add_files_to_group, [:project_path, :output_folder, :group_name, :relative_path, :target_index] do |t, args|
@@ -22,7 +22,7 @@ namespace :xcode do
     output_folder = args.output_folder
     target_index = args.target_index.to_i
     target = project.targets[target_index]
-    
+
     parent_group = project[relative_path]
 
     output_group = parent_group.find_subpath(group_name, should_create = true)
@@ -42,7 +42,7 @@ namespace :xcode do
     end
 
     target.add_file_references(new_references)
-    
+
     project.save(project_path)
   end
 end

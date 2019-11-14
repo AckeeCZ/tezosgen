@@ -1,9 +1,7 @@
 #!/usr/bin/swift
 
 import Foundation
-import SwiftCLI
-import TezosGenFramework
+import TezosGenKit
 
-let generatorCLI = CLI(singleCommand: GenerateCommand())
-
-generatorCLI.goAndExit()
+var registry = CommandRegistry()
+registry.run()

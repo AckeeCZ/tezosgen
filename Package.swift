@@ -1,4 +1,4 @@
-// swift-tools-version:4.0
+// swift-tools-version:5.1
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -6,36 +6,32 @@ import PackageDescription
 let package = Package(
     name: "TezosGen",
     products: [
-        .library(name: "TezosGen", targets: ["TezosGenFramework"]),
         .executable(name: "tezosgen", targets: ["tezosgen"])
     ],
     dependencies: [
-        // Dependencies declare other packages that this package depends on.
-        .package(url: "https://github.com/jakeheis/SwiftCLI", .upToNextMajor(from: "5.2.0")),
-        .package(url: "https://github.com/kylef/PathKit.git", .upToNextMajor(from: "0.9.1")),
-        .package(url: "https://github.com/SwiftGen/StencilSwiftKit", .upToNextMajor(from: "2.6.0"))
+        .package(url: "https://github.com/fortmarek/tuist.git", .branch("master")),
+//        .package(url: "https://github.com/fortmarek/StencilSwiftKit", .branch("master"))
     ],
     targets: [
-        // Targets are the basic building blocks of a package. A target can define a module or a test suite.
-        // Targets can depend on other targets in this package, and on products in packages which this package depends on.
-        .target(
-            name: "TezosGenFramework",
-            dependencies: [
-                "PathKit",
-                "StencilSwiftKit",
-            ]),
         .target(
             name: "tezosgen",
             dependencies: [
-                "SwiftCLI",
-                .target(name: "TezosGenFramework")
+                "TezosGenKit",
+            ]),
+        .target(
+            name: "TezosGenCore",
+            dependencies: [
+                "TuistGenerator"
+            ]),
+        .target(
+            name: "TezosGenKit",
+            dependencies: [
+                "TezosGenCore",
             ]),
         .testTarget(
-            name: "CLICodegenTests",
+            name: "TezosGenKitTests",
             dependencies: [
-                .target(name: "TezosGenFramework"),
-                "SwiftCLI",
-                "PathKit",
+                "TezosGenKit"
             ]),
     ]
 )

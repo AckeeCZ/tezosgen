@@ -1,28 +1,3 @@
-import Foundation
-
-public enum TezosPrimaryType: String, Codable {
-    case string
-    case int
-    case nat
-    case bool
-    case bytes
-    case set
-    case list
-    case pair
-    case option
-    case or
-    case timestamp
-    case tez
-    case signature
-    case key
-    case contract
-    case keyHash = "key_hash"
-    case mutez
-    case map
-    case bigMap = "big_map"
-    case unit
-    case address
-}
 
 public class TezosElement: Decodable {
     public let name: String?
@@ -290,27 +265,5 @@ extension TezosElement {
         var args: [String] = []
         renderArgInitElementToSwift(index: &index, currentlyRendered: "tezosElement", args: &args)
         return args
-    }
-}
-
-public struct Contract: Decodable {
-    let parameter: TezosElement
-    let storage: TezosElement
-
-    enum CodingKeys: String, CodingKey {
-        case storage
-        case parameter
-    }
-
-    public init(storage: TezosElement, parameter: TezosElement) {
-        self.storage = storage
-        self.parameter = parameter
-    }
-
-    public init(from decoder: Decoder) throws {
-        let values = try decoder.container(keyedBy: CodingKeys.self)
-        let storage = try values.decode(TezosElement.self, forKey: .storage)
-        let parameter = try values.decode(TezosElement.self, forKey: .parameter)
-        self.init(storage: storage, parameter: parameter)
     }
 }
