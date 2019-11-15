@@ -13,6 +13,7 @@ enum GenerateError: FatalError, Equatable {
     case argumentNotProvided(String)
     case contractDecodeFailed(AbsolutePath)
     case xcodeProjectNotFound(AbsolutePath)
+    case invalidIndex(Int)
     
     var description: String {
         switch self {
@@ -24,6 +25,8 @@ enum GenerateError: FatalError, Equatable {
             return "Failed to decode contract at \(path.pathString)"
         case let .xcodeProjectNotFound(path):
             return "Could not find Xcode project at \(path.pathString)"
+        case let .invalidIndex(count):
+            return "Input is invalid; must be a number between 1 and \(count)"
         }
     }
     
@@ -39,6 +42,8 @@ enum GenerateError: FatalError, Equatable {
             return lhsPath == rhsPath
         case let (.xcodeProjectNotFound(lhsPath), .xcodeProjectNotFound(rhsPath)):
             return lhsPath == rhsPath
+        case let (.invalidIndex(lhsCount), .invalidIndex(rhsCount)):
+            return lhsCount == rhsCount
         default:
             return false
         }
@@ -128,9 +133,9 @@ final class GenerateCommand: NSObject, Command {
             if let xcodePath = xcodePath {
                 var xcodeComponents = xcodePath.components(separatedBy: "/")
                 xcodeComponents.remove(at: xcodeComponents.endIndex - 1)
-                return AbsolutePath(xcodeComponents.joined(separator: "/")).appending(RelativePath(outputValue))
+                return AbsolutePath(xcodeComponents.joined(separator: "/"), relativeTo: FileHandler.shared.currentPath).appending(RelativePath(outputValue))
             } else {
-                return AbsolutePath(outputValue)
+                return AbsolutePath(outputValue, relativeTo: FileHandler.shared.currentPath)
             }
         } else {
             return FileHandler.shared.currentPath.appending(component: "GeneratedContracts")
@@ -149,8 +154,7 @@ final class GenerateCommand: NSObject, Command {
             let index = Int(intString),
             index > 0 && index <= targets.count
         else {
-            Printer.shared.print(error: "Input is invalid; must be a number between 1 and \(targets.count)")
-            fatalError()
+            throw GenerateError.invalidIndex(targets.count)
         }
         
         return targets[index - 1]
