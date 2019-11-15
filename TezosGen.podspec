@@ -1,5 +1,5 @@
 Pod::Spec.new do |s|
-    s.name             = 'TezosGen'
+    s.name             = 'tezosgen'
     s.version          = '1.0.3'
     s.summary          = 'Generate code from abi.json'
   
@@ -11,13 +11,13 @@ Pod::Spec.new do |s|
   
     s.description      = "Generate code from abi.json using Swift tool."
   
-    s.homepage         = 'https://github.com/AckeeCZ/Tezos-iOS-Dev-Kit.git'
+    s.homepage         = 'https://github.com/AckeeCZ/tezosgen.git'
     s.license          = { :type => 'MIT', :file => 'LICENSE' }
     s.author           = { 'Ackee' => 'info@ackee.cz' }
-    s.source = { http: "https://github.com/AckeeCZ/Tezos-iOS-Dev-Kit/releases/download/#{s.version}/tezosgen-#{s.version}.zip" }
+    s.source = { http: "https://github.com/AckeeCZ/tezosgen/releases/download/#{s.version}/tezosgen-#{s.version}.zip" }
     s.preserve_paths = '*'
     s.ios.deployment_target = "10.0"
-    s.swift_version = "4.2"
+    s.swift_version = "5.1"
     s.dependency 'TezosSwift', '~> 1.0'
   end
   
