@@ -3,6 +3,8 @@ import protocol TuistSupport.Command
 import class TuistSupport.FileHandler
 import class TuistSupport.Printer
 import class TuistSupport.System
+import protocol TuistSupport.FatalError
+import enum TuistSupport.ErrorType
 import Foundation
 import SPMUtility
 import TezosGenCore
@@ -11,6 +13,27 @@ import TezosGenUtils
 import XcodeProj
 import PathKit
 
+enum GenerateError: FatalError {
+    case fileNotFound(AbsolutePath)
+    case argumentNotProvided(String)
+    case contractDecodeFailed(AbsolutePath)
+    case xcodeProjectNotFound(AbsolutePath)
+    
+    var description: String {
+        switch self {
+        case let .fileNotFound(path):
+            return "Contract file not found at \(path.pathString)"
+        case let .argumentNotProvided(argument):
+            return "\(argument) argument not provided"
+        case let .contractDecodeFailed(path):
+            return "Failed to decode contract at \(path.pathString)"
+        case let .xcodeProjectNotFound(path):
+            return "Could not find Xcode project at \(path.pathString)"
+        }
+    }
+    
+    var type: ErrorType { .abort }
+}
 
 final class GenerateCommand: NSObject, Command {
 
@@ -33,7 +56,9 @@ final class GenerateCommand: NSObject, Command {
         let subParser = parser.add(subparser: GenerateCommand.command, overview: GenerateCommand.overview)
         
         contractNameArgument = subParser.add(positional: "contract name", kind: String.self)
-        fileArgument = subParser.add(positional: "file", kind: String.self)
+        fileArgument = subParser.add(positional: "contract file",
+                                     kind: String.self,
+                                     completion: .filename)
         outputArgument = subParser.add(option: "--output",
                                        shortName: "-o",
                                        kind: String.self,
@@ -48,42 +73,32 @@ final class GenerateCommand: NSObject, Command {
     }
 
     func run(with arguments: ArgumentParser.Result) throws {
-        guard let file = arguments.get(fileArgument) else { return }
-        guard let contractName = arguments.get(contractNameArgument) else { fatalError() }
+        guard let file = arguments.get(fileArgument) else { throw GenerateError.argumentNotProvided("Contract file") }
+        guard let contractName = arguments.get(contractNameArgument) else { throw GenerateError.argumentNotProvided("Contract name") }
         
-        // TODO: Fix for relative
-        let filePath = AbsolutePath(file)
+        let filePath = AbsolutePath(file, relativeTo: FileHandler.shared.currentPath)
         guard FileHandler.shared.exists(filePath) else {
-            Printer.shared.print(error: "File at given path does not exist.")
-            return
+            throw GenerateError.fileNotFound(filePath)
         }
 
-        let contract: Contract
-
-        do {
-            guard let abiData: Data = try FileHandler.shared.readTextFile(filePath).data(using: .utf8) else { return }
-            contract = try JSONDecoder().decode(Contract.self, from: abiData)
-        } catch {
-            Printer.shared.print(error: "ABI JSON decode error! ⛔️")
-            return
-        }
-
-        var projectPath: AbsolutePath?
-        if let projectPathString = arguments.get(xcodeArgument) {
-            projectPath = AbsolutePath(projectPathString)
-        }
+        
+        guard let abiData: Data = try FileHandler.shared.readTextFile(filePath).data(using: .utf8) else { throw GenerateError.contractDecodeFailed(filePath) }
+        let contract = try JSONDecoder().decode(Contract.self, from: abiData)
 
         let generatedSwiftCodePath: AbsolutePath = self.generatedSwiftCodePath(outputValue: arguments.get(outputArgument),
                                                                                xcodePath: arguments.get(xcodeArgument))
 
         try contractCodeGenerator.generateContract(path: generatedSwiftCodePath, contract: contract, contractName: contractName)
         try contractCodeGenerator.generateSharedContract(path: generatedSwiftCodePath)
-
+        
         // Do not bind files when project or swift code path is not given
         guard
-            let xcodePath = projectPath,
+            let xcodePathString = arguments.get(xcodeArgument),
             let outputPathString = arguments.get(outputArgument)
-        else { fatalError() }
+        else { return }
+        let xcodePath = AbsolutePath(xcodePathString, relativeTo: FileHandler.shared.currentPath)
+        guard FileHandler.shared.exists(xcodePath) else { throw GenerateError.xcodeProjectNotFound(xcodePath) }
+
         let outputPath = RelativePath(outputPathString)
         
         let targets = try XcodeProjectController.shared.targets(projectPath: xcodePath)

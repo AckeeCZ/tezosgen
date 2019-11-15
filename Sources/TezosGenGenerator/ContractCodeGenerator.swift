@@ -105,7 +105,7 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
                  **Important:**
                  Params are in the order of how they are specified in the Tezos structure tree
                 */
-                func call(\(contractParams) -> ContractMethodInvocation {
+                func call(\(contractParams)) -> ContractMethodInvocation {
                     let send: (_ from: Wallet, _ amount: TezToken, _ operationFees: OperationFees?, _ completion: @escaping RPCCompletion<String>) -> Void
             """
             if let checks = checks {
@@ -274,7 +274,7 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
 
              - Returns: Callable type to send Tezos with.
             */
-            func \(contractName.lowercased())(at: String) -> \(contractName)Box {
+            func \(contractName.prefix(1).lowercased() + contractName.dropFirst())(at: String) -> \(contractName)Box {
                 return \(contractName)Box(tezosClient: self, at: at)
             }
         }
