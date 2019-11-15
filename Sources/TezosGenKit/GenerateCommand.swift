@@ -1,19 +1,14 @@
+import Foundation
 import Basic
 import protocol TuistSupport.Command
-import class TuistSupport.FileHandler
-import class TuistSupport.Printer
-import class TuistSupport.System
 import protocol TuistSupport.FatalError
 import enum TuistSupport.ErrorType
-import Foundation
 import SPMUtility
 import TezosGenCore
 import TezosGenGenerator
-import TezosGenUtils
-import XcodeProj
-import PathKit
+import class XcodeProj.PBXNativeTarget
 
-enum GenerateError: FatalError {
+enum GenerateError: FatalError, Equatable {
     case fileNotFound(AbsolutePath)
     case argumentNotProvided(String)
     case contractDecodeFailed(AbsolutePath)
@@ -33,6 +28,21 @@ enum GenerateError: FatalError {
     }
     
     var type: ErrorType { .abort }
+    
+    static func == (lhs: GenerateError, rhs: GenerateError) -> Bool {
+        switch (lhs, rhs) {
+        case let (.fileNotFound(lhsPath), .fileNotFound(rhsPath)):
+            return lhsPath == rhsPath
+        case let (.argumentNotProvided(lhsArg), .argumentNotProvided(rhsArg)):
+            return lhsArg == rhsArg
+        case let (.contractDecodeFailed(lhsPath), .contractDecodeFailed(rhsPath)):
+            return lhsPath == rhsPath
+        case let (.xcodeProjectNotFound(lhsPath), .xcodeProjectNotFound(rhsPath)):
+            return lhsPath == rhsPath
+        default:
+            return false
+        }
+    }
 }
 
 final class GenerateCommand: NSObject, Command {
@@ -144,11 +154,5 @@ final class GenerateCommand: NSObject, Command {
         }
         
         return targets[index - 1]
-    }
-}
-
-extension AbsolutePath {
-    var path: Path {
-        return Path(pathString)
     }
 }

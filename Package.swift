@@ -10,7 +10,6 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/fortmarek/tuist.git", .branch("master")),
-//        .package(url: "https://github.com/fortmarek/StencilSwiftKit", .branch("master"))
     ],
     targets: [
         .target(
@@ -29,21 +28,21 @@ let package = Package(
                 "TezosGenCore"
             ]),
         .target(
-            name: "TezosGenUtils",
-            dependencies: [
-            "TezosGenCore"
-        ]),
-        .target(
             name: "TezosGenKit",
             dependencies: [
                 "TezosGenCore",
                 "TezosGenGenerator",
-                "TezosGenUtils",
+            ]),
+        .target(
+            name: "TezosGenCoreTesting",
+            dependencies: [
+                "TezosGenCore",
             ]),
         .testTarget(
             name: "TezosGenKitTests",
             dependencies: [
-                "TezosGenKit"
+                "TezosGenKit",
+                "TezosGenCoreTesting"
             ]),
     ]
 )

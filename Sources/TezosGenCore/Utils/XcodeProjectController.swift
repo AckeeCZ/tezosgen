@@ -1,6 +1,5 @@
 import XcodeProj
 import Basic
-import TezosGenCore
 
 public protocol XcodeProjectControlling {
     func addFilesAndGroups(xcodePath: AbsolutePath, outputPath: RelativePath, files: [AbsolutePath], target: PBXNativeTarget) throws
