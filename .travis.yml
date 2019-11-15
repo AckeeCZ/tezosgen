@@ -9,7 +9,7 @@ before_deploy:
 - swift build --static-swift-stdlib --configuration release
 - export BINARY_PATH=`swift build --show-bin-path --configuration release`/TezosGen
 - mv "$BINARY_PATH" .
-- zip -r tezosgen-$TRAVIS_TAG.zip LICENSE TezosGen Rakefile templates/*
+- zip -r tezosgen-$TRAVIS_TAG.zip LICENSE TezosGen templates/*
 after_deploy:
 - pod trunk push --skip-import-validation --skip-tests --allow-warnings
 deploy:
