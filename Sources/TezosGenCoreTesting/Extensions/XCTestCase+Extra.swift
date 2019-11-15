@@ -106,4 +106,8 @@ public extension TezosGenUnitTestCase {
             XCTFail("The code threw the following error: \(error)", file: file, line: line)
         }
     }
+    
+    func AssertEqual<T: Equatable>(_ expected: T, _ received: T, file: StaticString = #file, line: UInt = #line) {
+        XCTAssertTrue(expected == received, "Found difference for " + diff(expected, received).joined(separator: ", "), file: file, line: line)
+    }
 }

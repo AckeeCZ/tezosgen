@@ -44,5 +44,11 @@ let package = Package(
                 "TezosGenKit",
                 "TezosGenCoreTesting"
             ]),
+        .testTarget(
+            name: "TezosGenGeneratorTests",
+            dependencies: [
+                "TezosGenGenerator",
+                "TezosGenCoreTesting"
+            ]),
     ]
 )

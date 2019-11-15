@@ -9,6 +9,14 @@ public class TezosElement: Decodable {
         case args
         case annots
     }
+    
+    public init(name: String? = nil,
+                type: TezosPrimaryType,
+                args: [TezosElement] = []) {
+        self.name = name
+        self.type = type
+        self.args = args
+    }
 
     public required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)

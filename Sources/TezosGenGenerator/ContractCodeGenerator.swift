@@ -98,7 +98,7 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
         if let paramaterType = paramaterType {
             contents +=
             """
-                
+            
                 
                 /**
                  Call \(contractName) with specified params.
