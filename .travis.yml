@@ -1,5 +1,8 @@
 language: objective-c
-osx_image: xcode10.1
+osx_image: xcode11
+env:
+  global:
+  - FRAMEWORK_NAME=tezosgen
 script:
 - swift build
 - swift test
@@ -7,9 +10,9 @@ script:
 - pod lib lint --skip-import-validation --skip-tests --allow-warnings
 before_deploy:
 - swift build --static-swift-stdlib --configuration release
-- export BINARY_PATH=`swift build --show-bin-path --configuration release`/TezosGen
+- export BINARY_PATH=`swift build --show-bin-path --configuration release`/$FRAMEWORK_NAME
 - mv "$BINARY_PATH" .
-- zip -r tezosgen-$TRAVIS_TAG.zip LICENSE TezosGen Rakefile templates/*
+- zip -r $FRAMEWORK_NAME-$TRAVIS_TAG.zip LICENSE $FRAMEWORK_NAME templates/*
 after_deploy:
 - pod trunk push --skip-import-validation --skip-tests --allow-warnings
 deploy:
@@ -19,5 +22,5 @@ deploy:
   file: "tezosgen-$TRAVIS_TAG.zip"
   skip_cleanup: true
   on:
-    repo: AckeeCZ/Tezos-iOS-Dev-Kit
+    repo: AckeeCZ/tezosgen
     tags: true
