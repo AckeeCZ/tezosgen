@@ -37,7 +37,7 @@ final class ContractCodeGeneratorTests: TezosGenUnitTestCase {
         try subject.generateSharedContract(path: fileHandler.currentPath)
         
         // Then
-        AssertEqual(try fileHandler.readTextFile(fileHandler.currentPath.appending(component: "SharedContract.swift")), expectedContents)
+        XCTAssertEqual(try fileHandler.readTextFile(fileHandler.currentPath.appending(component: "SharedContract.swift")), expectedContents)
     }
     
     func test_contract_is_generated() throws {
@@ -50,7 +50,7 @@ final class ContractCodeGeneratorTests: TezosGenUnitTestCase {
         try subject.generateContract(path: fileHandler.currentPath, contract: contract, contractName: contractName)
         
         // Then
-        AssertEqual(try fileHandler.readTextFile(contractPath).replacingOccurrences(of: " ", with: ""), expectedContents.replacingOccurrences(of: " ", with: ""))
+        XCTAssertEqual(try fileHandler.readTextFile(contractPath).replacingOccurrences(of: " ", with: ""), expectedContents.replacingOccurrences(of: " ", with: ""))
     }
     
     let expectedContents: String = """

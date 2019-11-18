@@ -3,7 +3,7 @@ import TezosGenCore
 import class XcodeProj.PBXNativeTarget
 
 public final class MockXcodeProjectController: XcodeProjectControlling {
-    public var addFilesAndGroupsStub: ((AbsolutePath, RelativePath, [AbsolutePath], PBXNativeTarget) throws -> ())?
+    public var addFilesAndGroupsStub: ((AbsolutePath, RelativePath, [AbsolutePath], PBXNativeTarget) throws -> Void)?
     public var targetsStub: ((AbsolutePath) throws -> [PBXNativeTarget])?
     
     public func addFilesAndGroups(xcodePath: AbsolutePath, outputPath: RelativePath, files: [AbsolutePath], target: PBXNativeTarget) throws {

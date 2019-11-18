@@ -7,6 +7,8 @@ public protocol ContractCodeGenerating {
     func generateSharedContract(path: AbsolutePath) throws
 }
 
+// swiftlint:disable line_length
+// swiftlint:disable:next type_body_length
 public final class ContractCodeGenerator: ContractCodeGenerating {
     public init() { }
     
@@ -66,18 +68,19 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
         try FileHandler.shared.write(contents, path: sharedContractPath, atomically: true)
     }
     
+    // swiftlint:disable:next function_body_length
     private func generateContract(path: AbsolutePath,
-                      contractName: String,
-                      arguments: String,
-                      storageType: String,
-                      storageInternalType: String,
-                      paramaterType: String?,
-                      contractParams: String,
-                      checks: String?,
-                      contractInit: String,
-                      contractInitArguments: String,
-                      isSimple: Bool,
-                      key: String?) throws {
+                                  contractName: String,
+                                  arguments: String,
+                                  storageType: String,
+                                  storageInternalType: String,
+                                  paramaterType: String?,
+                                  contractParams: String,
+                                  checks: String?,
+                                  contractInit: String,
+                                  contractInitArguments: String,
+                                  isSimple: Bool,
+                                  key: String?) throws {
         var contents = """
         // Generated using TezosGen
         // swiftlint:disable file_length
@@ -147,7 +150,6 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
             /// Call this method to obtain contract status data
             func status(completion: @escaping RPCCompletion<
         """
-        
         
         if storageType != "Void" {
             contents += """
