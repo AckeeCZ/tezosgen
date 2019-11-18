@@ -7,6 +7,8 @@ public protocol ContractCodeGenerating {
     func generateSharedContract(path: AbsolutePath) throws
 }
 
+// swiftlint:disable line_length
+// swiftlint:disable:next type_body_length
 public final class ContractCodeGenerator: ContractCodeGenerating {
     public init() { }
     
@@ -50,13 +52,13 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
         import TezosSwift
 
         struct ContractMethodInvocation {
-            private let send: (_ from: Wallet, _ amount: TezToken, _ operationFees: OperationFees?, _ completion: @escaping RPCCompletion<String>) -> Void
+            private let send: (_ from: Wallet, _ amount: TezToken, _ operationFees: OperationFees?, _ completion: @escaping RPCCompletion<String>) -> Cancelable?
 
-            init(send: @escaping (_ from: Wallet, _ amount: TezToken, _ operationFees: OperationFees?, _ completion: @escaping RPCCompletion<String>) -> Void) {
+            init(send: @escaping (_ from: Wallet, _ amount: TezToken, _ operationFees: OperationFees?, _ completion: @escaping RPCCompletion<String>) -> Cancelable?) {
                 self.send = send
             }
 
-            func send(from: Wallet, amount: TezToken, operationFees: OperationFees? = nil, completion: @escaping RPCCompletion<String>) {
+            func send(from: Wallet, amount: TezToken, operationFees: OperationFees? = nil, completion: @escaping RPCCompletion<String>) -> Cancelable? {
                 self.send(from, amount, operationFees, completion)
             }
         }
@@ -66,18 +68,19 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
         try FileHandler.shared.write(contents, path: sharedContractPath, atomically: true)
     }
     
+    // swiftlint:disable:next function_body_length
     private func generateContract(path: AbsolutePath,
-                      contractName: String,
-                      arguments: String,
-                      storageType: String,
-                      storageInternalType: String,
-                      paramaterType: String?,
-                      contractParams: String,
-                      checks: String?,
-                      contractInit: String,
-                      contractInitArguments: String,
-                      isSimple: Bool,
-                      key: String?) throws {
+                                  contractName: String,
+                                  arguments: String,
+                                  storageType: String,
+                                  storageInternalType: String,
+                                  paramaterType: String?,
+                                  contractParams: String,
+                                  checks: String?,
+                                  contractInit: String,
+                                  contractInitArguments: String,
+                                  isSimple: Bool,
+                                  key: String?) throws {
         var contents = """
         // Generated using TezosGen
         // swiftlint:disable file_length
@@ -106,7 +109,7 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
                  Params are in the order of how they are specified in the Tezos structure tree
                 */
                 func call(\(contractParams)) -> ContractMethodInvocation {
-                    let send: (_ from: Wallet, _ amount: TezToken, _ operationFees: OperationFees?, _ completion: @escaping RPCCompletion<String>) -> Void
+                    let send: (_ from: Wallet, _ amount: TezToken, _ operationFees: OperationFees?, _ completion: @escaping RPCCompletion<String>) -> Cancelable?
             """
             if let checks = checks {
                 contents +=
@@ -134,7 +137,7 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
             contents +=
             """
                 func call() -> ContractMethodInvocation {
-                    let send: (_ from: Wallet, _ amount: TezToken, _ operationFees: OperationFees?, _ completion: @escaping RPCCompletion<String>) -> Void = { from, amount, operationFees, completion in
+                    let send: (_ from: Wallet, _ amount: TezToken, _ operationFees: OperationFees?, _ completion: @escaping RPCCompletion<String>) -> Cancelable? = { from, amount, operationFees, completion in
                         self.tezosClient.send(amount: amount, to: self.at, from: from, operationFees: operationFees, completion: completion)
                     }
                 }
@@ -148,7 +151,6 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
             func status(completion: @escaping RPCCompletion<
         """
         
-        
         if storageType != "Void" {
             contents += """
             \(contractName)Status
@@ -160,9 +162,9 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
         }
         
         contents += """
-        >) {
+        >) -> Cancelable? {
                 let endpoint = "/chains/main/blocks/head/context/contracts/" + at
-                tezosClient.sendRPC(endpoint: endpoint, method: .get, completion: completion)
+                return tezosClient.sendRPC(endpoint: endpoint, method: .get, completion: completion)
             }
         }
         """

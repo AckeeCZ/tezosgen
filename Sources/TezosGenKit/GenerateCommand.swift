@@ -96,8 +96,9 @@ final class GenerateCommand: NSObject, Command {
             throw GenerateError.fileNotFound(filePath)
         }
 
-        
-        guard let abiData: Data = try FileHandler.shared.readTextFile(filePath).data(using: .utf8) else { throw GenerateError.contractDecodeFailed(filePath) }
+        guard
+            let abiData: Data = try FileHandler.shared.readTextFile(filePath).data(using: .utf8)
+        else { throw GenerateError.contractDecodeFailed(filePath) }
         let contract = try JSONDecoder().decode(Contract.self, from: abiData)
 
         let generatedSwiftCodePath: AbsolutePath = self.generatedSwiftCodePath(outputValue: arguments.get(outputArgument),
@@ -133,7 +134,8 @@ final class GenerateCommand: NSObject, Command {
             if let xcodePath = xcodePath {
                 var xcodeComponents = xcodePath.components(separatedBy: "/")
                 xcodeComponents.remove(at: xcodeComponents.endIndex - 1)
-                return AbsolutePath(xcodeComponents.joined(separator: "/"), relativeTo: FileHandler.shared.currentPath).appending(RelativePath(outputValue))
+                return AbsolutePath(xcodeComponents.joined(separator: "/"), relativeTo: FileHandler.shared.currentPath)
+                    .appending(RelativePath(outputValue))
             } else {
                 return AbsolutePath(outputValue, relativeTo: FileHandler.shared.currentPath)
             }
