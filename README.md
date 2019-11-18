@@ -6,6 +6,12 @@
 [![Swift Package Manager compatible](https://img.shields.io/badge/SPM-compatible-brightgreen.svg?style=flat&colorA=28a745&&colorB=4E4E4E)](https://github.com/apple/swift-package-manager)
 [![Platform](https://img.shields.io/cocoapods/p/tezosgen.svg?style=flat)](http://cocoapods.org/pods/tezosgen)
 
+## What's tezosgen
+
+tezosgen is a smart contract code generator - you just specify the smart contract's specification and tezosgen generates type-safe `.swift` files, so using smart contracts in your iOS or Mac app has never been easier!
+
+This project has been published as a part of [Tezos-iOS-Dev-Kit](https://github.com/AckeeCZ/Tezos-iOS-Dev-Kit)
+
 ## Installation
 
 There are multiple possibilities to install tezosgen on your machine or in your project, depending on your preferences and needs. Note that if you do not install `tezosgen` using `Cocoapods`, you will have have to import `TezosSwift` by yourself.
@@ -106,9 +112,10 @@ tezosClient.optionalStringContract(at: "KT1Rh4iEMxBLJbDbz7iAB6FGLJ3mSCx3qFrW").c
         testCompletionExpectation.fulfill()
     }
 })
-``` 
+```
 
 `wallet` and `tezosClient` should be created with [TezosSwift](https://github.com/AckeeCZ/TezosSwift)
 Also note that right now the created code works with `ReactiveSwift` only.
 
 Result of the call is either a `String` hash of the transaction or an `TezosError`.
+
