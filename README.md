@@ -112,9 +112,10 @@ tezosClient.optionalStringContract(at: "KT1Rh4iEMxBLJbDbz7iAB6FGLJ3mSCx3qFrW").c
         testCompletionExpectation.fulfill()
     }
 })
-``` 
+```
 
 `wallet` and `tezosClient` should be created with [TezosSwift](https://github.com/AckeeCZ/TezosSwift)
 Also note that right now the created code works with `ReactiveSwift` only.
 
 Result of the call is either a `String` hash of the transaction or an `TezosError`.
+
