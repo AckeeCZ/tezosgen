@@ -1,1 +1,5 @@
 .build
+
+# Tapestry
+Tapestries/.build
+Tapestries/.swiftpm
