@@ -1,28 +1,28 @@
 # tezosgen
 
 [![CI Status](http://img.shields.io/travis/AckeeCZ/tezosgen.svg?style=flat)](https://travis-ci.org/AckeeCZ/tezosgen)
-[![Version](https://img.shields.io/cocoapods/v/TezosGen.svg?style=flat)](http://cocoapods.org/pods/TezosGen)
-[![License](https://img.shields.io/cocoapods/l/TezosGen.svg?style=flat)](http://cocoapods.org/pods/TezosGen)
+[![Version](https://img.shields.io/cocoapods/v/tezosgen.svg?style=flat)](http://cocoapods.org/pods/tezosgen)
+[![License](https://img.shields.io/cocoapods/l/tezosgen.svg?style=flat)](http://cocoapods.org/pods/tezosgen)
 [![Swift Package Manager compatible](https://img.shields.io/badge/SPM-compatible-brightgreen.svg?style=flat&colorA=28a745&&colorB=4E4E4E)](https://github.com/apple/swift-package-manager)
-[![Platform](https://img.shields.io/cocoapods/p/TezosGen.svg?style=flat)](http://cocoapods.org/pods/TezosGen)
+[![Platform](https://img.shields.io/cocoapods/p/tezosgen.svg?style=flat)](http://cocoapods.org/pods/tezosgen)
+
+## What's tezosgen
+
+tezosgen is a smart contract code generator - you just specify the smart contract's specification and tezosgen generates type-safe `.swift` files, so using smart contracts in your iOS or Mac app has never been easier!
+
+This project has been published as a part of [Tezos-iOS-Dev-Kit](https://github.com/AckeeCZ/Tezos-iOS-Dev-Kit)
 
 ## Installation
 
-There are multiple possibilities to install TezosGen on your machine or in your project, depending on your preferences and needs. Note that if you do not install `TezosGen` using `Cocoapods`, you will have have to import `TezosSwift` by yourself.
+There are multiple possibilities to install tezosgen on your machine or in your project, depending on your preferences and needs. Note that if you do not install `tezosgen` using `Cocoapods`, you will have have to import `TezosSwift` by yourself.
 
 <details>
-<summary><strong>Download the ZIP</strong> for the latest release</summary>
+<summary>Using <strong>Homebrew</strong></summary>
 
-* [Go to the GitHub page for the latest release](https://github.com/AckeeCZ/Tezos-iOS-Dev-Kit/releases/latest)
-* Download the `TezosGen-x.y.z.zip` file associated with that release
-* Extract the content of the zip archive in your project directory
-
-We recommend that you **unarchive the ZIP inside your project directory** and **commit its content** to git. This way, **all coworkers will use the same version of TezosGen for this project**.
-
-If you unarchived the ZIP file in a folder e.g. called `TezosGen`, you can then invoke it like this:
-
-```sh
-TezosGen/bin/tezosgen …
+```bash
+$ brew tap AckeeCZ/tezosgen
+$ brew install tezosgen
+$ tezosgen
 ```
 
 ---
@@ -30,31 +30,29 @@ TezosGen/bin/tezosgen …
 <details>
 <summary>Via <strong>CocoaPods</strong></summary>
 
-If you're using CocoaPods, you can simply add `pod 'TezosGen'` to your `Podfile`.
+If you're using CocoaPods, you can simply add `pod 'tezosgen' ~> 1.0.3` to your `Podfile`.
 
-This will download the `TezosGen` binaries and dependencies in `Pods/` during your next `pod install` execution.
+This will download the `tezosgen` binaries and dependencies in `Pods/` during your next `pod install` execution.
 
-Given that you can specify an exact version for ``TezosGen`` in your `Podfile`, this allows you to ensure **all coworkers will use the same version of TezosGen for this project**.
+Given that you can specify an exact version for ``tezosgen`` in your `Podfile`, this allows you to ensure **all coworkers will use the same version of tezosgen for this project**.
 
-You can then invoke TezosGen from your terminal:
+You can then invoke tezosgen from your terminal:
 ```sh
-Pods/TezosGen/TezosGen …
+Pods/tezosgen/tezosgen …
 ```
 
-_Note: TezosGen isn't really a pod, as it's not a library your code will depend on at runtime; so the installation via CocoaPods is just a trick that installs the TezosGen binaries in the Pods/ folder, but you won't see any swift files in the Pods/TezosGen group in your Xcode's Pods.xcodeproj. That's normal: the TezosGen binary is still present in that folder in the Finder._
+_Note: tezosgen isn't really a pod, as it's not a library your code will depend on at runtime; so the installation via CocoaPods is just a trick that installs the tezosgen binaries in the Pods/ folder, but you won't see any swift files in the Pods/tezosgen group in your Xcode's Pods.xcodeproj. That's normal: the tezosgen binary is still present in that folder in the Finder._
 
 ---
 </details>
 <details>
-<summary><strong>System-wide installation</strong></summary>
+<summary><strong>Swift Package Manager</strong></summary>
 
-* [Go to the GitHub page for the latest release](https://github.com/AckeeCZ/Tezos-iOS-Dev-Kit/releases/latest)
-* Download the `TezosGen-x.y.z.zip` file associated with that release
-* Extract the content of the zip archive
+Add this to your `Package.swift`:
 
-1. `cd` into the unarchived directory 
-2. `make install`
-3. You then invoke tezosgen simply with `tezosgen ...`
+```swift
+.package(url: "https://github.com/AckeeCZ/tezosgen.git", .upToNextMajor(from: "1.0.3")),
+```
 
 </details>
 
@@ -62,9 +60,9 @@ _Note: TezosGen isn't really a pod, as it's not a library your code will depend 
 
 We have also created iOS MVVM Project Template, so setting your project has never been easier. 
 Easily follow the [installation instructions](https://github.com/AckeeCZ/iOS-MVVM-ProjectTemplate).
-After you are done, add `name_of_your_abi.json` file to `Resources`. Then add `TezosGen` to your `Podfile`, do `pod install` and run this command in your project root directory:
+After you are done, add `name_of_your_abi.json` file to `Resources`. Then add `tezosgen` to your `Podfile`, do `pod install` and run this command in your project root directory:
 ```sh
-Pods/TezosGen/TezosGen HelloContract NameOfYourProject/Resources/abi.json -x NameOfYourProject.xcodeproj -o NameOfYourProject/Model/Generated/GeneraredContracts
+Pods/tezosgen/tezosgen HelloContract NameOfYourProject/Resources/abi.json -x NameOfYourProject.xcodeproj -o NameOfYourProject/Model/Generated/GeneraredContracts
 ```
 
 ## Usage
@@ -114,9 +112,10 @@ tezosClient.optionalStringContract(at: "KT1Rh4iEMxBLJbDbz7iAB6FGLJ3mSCx3qFrW").c
         testCompletionExpectation.fulfill()
     }
 })
-``` 
+```
 
 `wallet` and `tezosClient` should be created with [TezosSwift](https://github.com/AckeeCZ/TezosSwift)
 Also note that right now the created code works with `ReactiveSwift` only.
 
 Result of the call is either a `String` hash of the transaction or an `TezosError`.
+
