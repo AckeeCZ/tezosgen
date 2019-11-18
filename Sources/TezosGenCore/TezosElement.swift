@@ -1,4 +1,3 @@
-
 public class TezosElement: Decodable {
     public let name: String?
     public let type: TezosPrimaryType

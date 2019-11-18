@@ -97,17 +97,16 @@ public extension TezosGenUnitTestCase {
         XCTAssertTrue(array.isEmpty, "Expected array to be empty but it's not. It contains the following elements: \(array)", file: file, line: line)
     }
     
-    func XCTAssertThrowsSpecific<Error: Swift.Error & Equatable, T>(_ closure: @autoclosure () throws -> T, _ error: Error, file: StaticString = #file, line: UInt = #line) {
+    func XCTAssertThrowsSpecific<Error: Swift.Error & Equatable, T>(_ closure: @autoclosure () throws -> T,
+                                                                    _ error: Error,
+                                                                    file: StaticString = #file,
+                                                                    line: UInt = #line) {
         do {
-            let _ = try closure()
+            _ = try closure()
         } catch let closureError as Error {
             XCTAssertEqual(closureError, error, file: file, line: line)
         } catch {
             XCTFail("The code threw the following error: \(error)", file: file, line: line)
         }
-    }
-    
-    func AssertEqual<T: Equatable>(_ expected: T, _ received: T, file: StaticString = #file, line: UInt = #line) {
-        XCTAssertTrue(expected == received, "Found difference for " + diff(expected, received).joined(separator: ", "), file: file, line: line)
     }
 }

@@ -1,4 +1,3 @@
-
 public enum TezosPrimaryType: String, Codable {
     case string
     case int

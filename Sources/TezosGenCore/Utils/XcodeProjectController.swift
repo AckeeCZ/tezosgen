@@ -34,11 +34,9 @@ public final class XcodeProjectController: XcodeProjectControlling {
         }
         
         try pbxFiles.forEach {
-            let _ = try currentTarget.sourcesBuildPhase()?.add(file: $0)
+            _ = try currentTarget.sourcesBuildPhase()?.add(file: $0)
         }
 
         try xcodeproj.write(path: xcodePath.path)
     }
-    
-    
 }

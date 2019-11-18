@@ -6,4 +6,3 @@ public extension AbsolutePath {
         Path(pathString)
     }
 }
-
