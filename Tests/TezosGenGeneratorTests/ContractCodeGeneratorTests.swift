@@ -86,7 +86,7 @@ final class ContractCodeGeneratorTests: TezosGenUnitTestCase {
         }
 
         /// Call this method to obtain contract status data
-        func status(completion: @escaping RPCCompletion<HelloContractStatus>) {
+        func status(completion: @escaping RPCCompletion<HelloContractStatus>) -> Cancelable? {
             let endpoint = "/chains/main/blocks/head/context/contracts/" + at
             return tezosClient.sendRPC(endpoint: endpoint, method: .get, completion: completion)
         }

@@ -160,7 +160,7 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
         }
         
         contents += """
-        >) {
+        >) -> Cancelable? {
                 let endpoint = "/chains/main/blocks/head/context/contracts/" + at
                 return tezosClient.sendRPC(endpoint: endpoint, method: .get, completion: completion)
             }
