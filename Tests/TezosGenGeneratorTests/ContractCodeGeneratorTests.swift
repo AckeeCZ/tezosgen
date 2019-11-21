@@ -21,7 +21,7 @@ final class ContractCodeGeneratorTests: TezosGenUnitTestCase {
         import TezosSwift
 
         struct ContractMethodInvocation {
-            private let send: (_ from: Wallet, _ amount: TezToken, _ operationFees: OperationFees?, _ completion: @escaping RPCCompletion<String>) -> Cancelable?
+            fileprivate let send: (_ from: Wallet, _ amount: TezToken, _ operationFees: OperationFees?, _ completion: @escaping RPCCompletion<String>) -> Cancelable?
 
             init(send: @escaping (_ from: Wallet, _ amount: TezToken, _ operationFees: OperationFees?, _ completion: @escaping RPCCompletion<String>) -> Cancelable?) {
                 self.send = send

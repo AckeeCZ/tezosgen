@@ -37,8 +37,8 @@ class GenerateCommandTests: TezosGenUnitTestCase {
         let outputFile = "output_file"
         let result = try parser.parse(["generate", "contract", path.pathString, "-x", xcodeprojPath.pathString, "-o", outputFile,  "--extensions", "combine"])
         
-        inputReader.readPBXNativeTargetStub = { options, _ in
-            options.first ?? PBXNativeTarget(name: "")
+        xcodeProjectController.targetsStub = { _ in
+            [PBXNativeTarget(name: "")]
         }
         
         xcodeProjectController.addFilesAndGroupsStub = { xcodePath, outputPath, files, target in

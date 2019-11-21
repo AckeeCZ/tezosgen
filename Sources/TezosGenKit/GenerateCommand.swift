@@ -55,21 +55,6 @@ enum GenerateError: FatalError, Equatable {
     }
 }
 
-/// Available extensions for generating like convenience Combine methods, etc.
-enum GeneratorExtension: String, ArgumentKind {
-    case combine = "combine"
-    
-    static var completion: ShellCompletion = .none
-    
-    public init(argument: String) throws {
-        guard let generatorExtension = GeneratorExtension(rawValue: argument) else {
-            throw ArgumentConversionError.typeMismatch(value: argument, expectedType: GeneratorExtension.self)
-        }
-
-        self = generatorExtension
-    }
-}
-
 final class GenerateCommand: NSObject, Command {
 
     static var command: String = "generate"
@@ -131,7 +116,7 @@ final class GenerateCommand: NSObject, Command {
                                                                                xcodePath: arguments.get(xcodeArgument))
 
         try contractCodeGenerator.generateContract(path: generatedSwiftCodePath, contract: contract, contractName: contractName)
-        try contractCodeGenerator.generateSharedContract(path: generatedSwiftCodePath)
+        try contractCodeGenerator.generateSharedContract(path: generatedSwiftCodePath, extensions: arguments.get(extensionsArgument) ?? [])
         
         // Do not bind files when project or swift code path is not given
         guard

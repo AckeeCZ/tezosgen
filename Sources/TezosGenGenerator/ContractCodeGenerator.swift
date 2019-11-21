@@ -4,6 +4,7 @@ import class TuistSupport.FileHandler
 
 public protocol ContractCodeGenerating {
     func generateContract(path: AbsolutePath, contract: Contract, contractName: String) throws
+    func generateSharedContract(path: AbsolutePath, extensions: [GeneratorExtension]) throws
     func generateSharedContract(path: AbsolutePath) throws
 }
 
@@ -46,13 +47,36 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
     }
     
     public func generateSharedContract(path: AbsolutePath) throws {
-        let contents = """
+        try generateSharedContract(path: path, extensions: [])
+    }
+    
+    
+    public func generateSharedContract(path: AbsolutePath, extensions: [GeneratorExtension]) throws {
+        let importExtensionContents = extensions.reduce("") { content, currentExtension in
+            switch currentExtension {
+            case .combine:
+                return content + "\nimport Combine"
+            }
+        }
+        
+        let additionalFunctionContents = extensions.reduce("") { content, currentExtension in
+            switch currentExtension {
+            case .combine:
+                return content + """
+                    
+                    func sendPublisher(from: Wallet, amount: TezToken, operationFees: OperationFees? = nil) -> ContractPublisher {
+                        ContractPublisher(send: { self.send(from, amount, operationFees, $0) })
+                    }
+                """
+            }
+        }
+        var contents = """
         // Generated using TezosGen
 
-        import TezosSwift
+        import TezosSwift\(importExtensionContents)
 
         struct ContractMethodInvocation {
-            private let send: (_ from: Wallet, _ amount: TezToken, _ operationFees: OperationFees?, _ completion: @escaping RPCCompletion<String>) -> Cancelable?
+            fileprivate let send: (_ from: Wallet, _ amount: TezToken, _ operationFees: OperationFees?, _ completion: @escaping RPCCompletion<String>) -> Cancelable?
 
             init(send: @escaping (_ from: Wallet, _ amount: TezToken, _ operationFees: OperationFees?, _ completion: @escaping RPCCompletion<String>) -> Cancelable?) {
                 self.send = send
@@ -61,12 +85,72 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
             func send(from: Wallet, amount: TezToken, operationFees: OperationFees? = nil, completion: @escaping RPCCompletion<String>) -> Cancelable? {
                 self.send(from, amount, operationFees, completion)
             }
+            \(additionalFunctionContents)
         }
         """
+        
+        extensions.forEach {
+            switch $0 {
+            case .combine:
+                contents += """
+                
+                
+                typealias SendMethod = (@escaping RPCCompletion<String>) -> Cancelable?
+
+                class ContractSubscription<S: Subscriber>: Subscription where S.Input == String, S.Failure == TezosError {
+                    private let send: SendMethod
+                    private var hasValue = true
+                    private var cancelable: Cancelable?
+                    private var cancellable: Cancellable?
+                    private var subscriber: S
+                    
+                    init(subscriber: S, send: @escaping SendMethod) {
+                        self.subscriber = subscriber
+                        self.send = send
+                    }
+                    
+                    func request(_ demand: Subscribers.Demand) {
+                        guard hasValue else { return }
+                        hasValue = false
+                        cancellable = Future { [weak self] promise in
+                            self?.cancelable = self?.send(promise)
+                        }.sink(receiveCompletion: { [weak self] in
+                            self?.subscriber.receive(completion: $0)
+                        }, receiveValue: { [weak self] in
+                            _ = self?.subscriber.receive($0)
+                        })
+                    }
+                    
+                    func cancel() {
+                        cancelable?.cancel()
+                        cancellable?.cancel()
+                    }
+                }
+
+                struct ContractPublisher: Publisher {
+                    typealias Output = String
+                    typealias Failure = TezosError
+                    
+                    private let send: SendMethod
+                    
+                    init(send: @escaping SendMethod) {
+                        self.send = send
+                    }
+                    
+                    func receive<S>(subscriber: S) where S : Subscriber, Failure == S.Failure, Output == S.Input {
+                        let subscription = ContractSubscription(subscriber: subscriber, send: send)
+                        subscriber.receive(subscription: subscription)
+                    }
+                }
+                """
+            }
+        }
         
         let sharedContractPath = path.appending(component: "SharedContract.swift")
         try FileHandler.shared.write(contents, path: sharedContractPath, atomically: true)
     }
+    
+    // MARK: - Helpers
     
     // swiftlint:disable:next function_body_length
     private func generateContract(path: AbsolutePath,
