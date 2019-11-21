@@ -6,6 +6,7 @@ public class TezosGenUnitTestCase: TezosGenTestCase {
     public var system: MockSystem!
     public var fileHandler: MockFileHandler!
     public var xcodeProjectController: MockXcodeProjectController!
+    public var inputReader: MockInputReader!
 
     public override func setUp() {
         super.setUp()
@@ -21,6 +22,10 @@ public class TezosGenUnitTestCase: TezosGenTestCase {
         // XcodeController
         xcodeProjectController = MockXcodeProjectController()
         XcodeProjectController.shared = xcodeProjectController
+        
+        // InputReader
+        inputReader = MockInputReader()
+        InputReader.shared = inputReader
     }
 
     public override func tearDown() {
@@ -35,6 +40,10 @@ public class TezosGenUnitTestCase: TezosGenTestCase {
         // XcodeController
         xcodeProjectController = nil
         XcodeProjectController.shared = XcodeProjectController()
+        
+        // InputReader
+        inputReader = nil
+        InputReader.shared = MockInputReader()
 
         super.tearDown()
     }

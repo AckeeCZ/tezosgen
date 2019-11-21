@@ -2,6 +2,7 @@ import Foundation
 import XCTest
 import SPMUtility
 @testable import TezosGenCoreTesting
+@testable import TezosGenCore
 @testable import TezosGenKit
 
 class GenerateCommandTests: TezosGenUnitTestCase {
@@ -21,6 +22,29 @@ class GenerateCommandTests: TezosGenUnitTestCase {
         
         // Then
         XCTAssertThrowsSpecific(try subject.run(with: result), GenerateError.fileNotFound(path))
+    }
+    
+    func test_sharedContract_is_generatedWithCombine() throws {
+        // Given
+        let path = fileHandler.currentPath.appending(component: "file")
+        let contractContent = """
+        {"parameter":  {"prim":"set","args":[{"prim":"nat"}]}, "storage": {"prim":"set","args":[{"prim":"nat"}]}}
+        """
+        try fileHandler.write(contractContent, path: path, atomically: true)
+        let xcodeprojPath = fileHandler.currentPath.appending(component: "test.xcodeproj")
+        try fileHandler.createFolder(xcodeprojPath)
+        let outputFile = "output_file"
+        let result = try parser.parse(["generate", "contract", path.pathString, "-x", xcodeprojPath.pathString, "-o", outputFile,  "--extensions", "combine"])
+        
+        xcodeProjectController.addFilesAndGroupsStub = { xcodePath, outputPath, files, target in
+            
+        }
+        
+        // When
+        try subject.run(with: result)
+        
+        // Then
+        
     }
 }
 

@@ -50,6 +50,21 @@ enum GenerateError: FatalError, Equatable {
     }
 }
 
+/// Available extensions for generating like convenience Combine methods, etc.
+enum GeneratorExtension: String, ArgumentKind {
+    case combine = "combine"
+    
+    static var completion: ShellCompletion = .none
+    
+    public init(argument: String) throws {
+        guard let generatorExtension = GeneratorExtension(rawValue: argument) else {
+            throw ArgumentConversionError.typeMismatch(value: argument, expectedType: GeneratorExtension.self)
+        }
+
+        self = generatorExtension
+    }
+}
+
 final class GenerateCommand: NSObject, Command {
 
     static var command: String = "generate"
@@ -59,6 +74,7 @@ final class GenerateCommand: NSObject, Command {
     private let fileArgument: PositionalArgument<String>
     private let outputArgument: OptionArgument<String>
     private let xcodeArgument: OptionArgument<String>
+    private let extensionsArgument: OptionArgument<[GeneratorExtension]>
     private let contractCodeGenerator: ContractCodeGenerating
 
     convenience init(parser: ArgumentParser) {
@@ -84,6 +100,11 @@ final class GenerateCommand: NSObject, Command {
                                       kind: String.self,
                                       usage: "Define location of .xcodeproj",
                                       completion: .filename)
+        extensionsArgument = subParser.add(option: "--extensions",
+                                            shortName: "-e",
+                                            kind: [GeneratorExtension].self,
+                                            strategy: .upToNextOption,
+                                            usage: "Define extensions for the generated code")
         self.contractCodeGenerator = contractCodeGenerator
     }
 
@@ -118,7 +139,7 @@ final class GenerateCommand: NSObject, Command {
         let outputPath = RelativePath(outputPathString)
         
         let targets = try XcodeProjectController.shared.targets(projectPath: xcodePath)
-        let target = try chooseTargetIndex(from: targets)
+        let target = try InputReader.shared.readInput(options: targets.map { $0.name }, question: "Choose target for the generated contract code:")
         
         let contractPath = generatedSwiftCodePath.appending(component: contractName + ".swift")
         let sharedContractPath = generatedSwiftCodePath.appending(component: "SharedContract.swift")
