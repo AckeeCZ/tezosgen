@@ -14,6 +14,7 @@ enum GenerateError: FatalError, Equatable {
     case contractDecodeFailed(AbsolutePath)
     case xcodeProjectNotFound(AbsolutePath)
     case invalidIndex(Int)
+    case noTargetsFound(AbsolutePath)
     
     var description: String {
         switch self {
@@ -27,6 +28,8 @@ enum GenerateError: FatalError, Equatable {
             return "Could not find Xcode project at \(path.pathString)"
         case let .invalidIndex(count):
             return "Input is invalid; must be a number between 1 and \(count)"
+        case let .noTargetsFound(path):
+            return "No targets found for project at \(path.pathString)"
         }
     }
     
@@ -44,6 +47,8 @@ enum GenerateError: FatalError, Equatable {
             return lhsPath == rhsPath
         case let (.invalidIndex(lhsCount), .invalidIndex(rhsCount)):
             return lhsCount == rhsCount
+        case let (.noTargetsFound(lhsPath), .noTargetsFound(rhsPath)):
+            return lhsPath == rhsPath
         default:
             return false
         }
@@ -139,7 +144,8 @@ final class GenerateCommand: NSObject, Command {
         let outputPath = RelativePath(outputPathString)
         
         let targets = try XcodeProjectController.shared.targets(projectPath: xcodePath)
-        let target = try InputReader.shared.readInput(options: targets.map { $0.name }, question: "Choose target for the generated contract code:")
+        guard !targets.isEmpty else { throw GenerateError.noTargetsFound(xcodePath) }
+        let target = try InputReader.shared.readInput(options: targets, question: "Choose target for the generated contract code:")
         
         let contractPath = generatedSwiftCodePath.appending(component: contractName + ".swift")
         let sharedContractPath = generatedSwiftCodePath.appending(component: "SharedContract.swift")

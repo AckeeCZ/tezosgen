@@ -38,6 +38,9 @@ public final class InputReader: InputReading {
     public static var shared: InputReading = InputReader()
     
     public func readInput<Option>(options: [Option], question: String) throws -> Option where Option: CustomStringConvertible, Option: Hashable {
+        if let onlyOption = options.first, onlyOption == options.last {
+            return onlyOption
+        }
         let acho = Acho<Option>()
         guard let answer = acho.ask(question: question, options: options) else { throw InputError.failedReading }
         return answer

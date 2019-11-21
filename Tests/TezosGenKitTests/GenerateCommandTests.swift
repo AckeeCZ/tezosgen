@@ -1,6 +1,7 @@
 import Foundation
 import XCTest
 import SPMUtility
+import class XcodeProj.PBXNativeTarget
 @testable import TezosGenCoreTesting
 @testable import TezosGenCore
 @testable import TezosGenKit
@@ -35,6 +36,10 @@ class GenerateCommandTests: TezosGenUnitTestCase {
         try fileHandler.createFolder(xcodeprojPath)
         let outputFile = "output_file"
         let result = try parser.parse(["generate", "contract", path.pathString, "-x", xcodeprojPath.pathString, "-o", outputFile,  "--extensions", "combine"])
+        
+        inputReader.readPBXNativeTargetStub = { options, _ in
+            options.first ?? PBXNativeTarget(name: "")
+        }
         
         xcodeProjectController.addFilesAndGroupsStub = { xcodePath, outputPath, files, target in
             
