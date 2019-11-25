@@ -1,4 +1,4 @@
-Resolves https://github.com/AckeeCZ/TezosSwift/issues/YYY
+Resolves https://github.com/AckeeCZ/tezosgen/issues/YYY
 
 ### Short description 📝
 
