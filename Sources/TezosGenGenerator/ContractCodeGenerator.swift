@@ -50,7 +50,6 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
         try generateSharedContract(path: path, extensions: [])
     }
     
-    
     public func generateSharedContract(path: AbsolutePath, extensions: [GeneratorExtension]) throws {
         let importExtensionContents = extensions.reduce("") { content, currentExtension in
             switch currentExtension {

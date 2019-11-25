@@ -15,11 +15,13 @@ public final class MockInputReader: InputReading {
         stubs[text] = output
     }
     
-    public func readInput<Option>(options: [Option], question: String) throws -> Option where Option : CustomStringConvertible, Option : Hashable {
+    public func readInput<Option>(options: [Option], question: String) throws -> Option where Option: CustomStringConvertible, Option: Hashable {
         switch Option.self {
         case is PBXNativeTarget.Type:
+            // swiftlint:disable:next force_cast
             return (try readPBXNativeTargetStub?(options as! [PBXNativeTarget], question) ?? PBXNativeTarget(name: "")) as! Option
         case is String.Type:
+            // swiftlint:disable:next force_cast
             return (try readInputStringStub?(options as! [String], question) ?? "") as! Option
         default:
             fatalError("\(Option.self) for `readInput` has not been stubbed")
@@ -34,7 +36,8 @@ public final class MockInputReader: InputReading {
         try readPBXNativeTargetStub?(options, question) ?? PBXNativeTarget(name: "")
     }
     
-    public func readEnumInput<EnumType>(question: String) throws -> EnumType where EnumType : CaseIterable, EnumType : RawRepresentable, EnumType.RawValue == String {
+    public func readEnumInput<EnumType>(question: String) throws -> EnumType
+        where EnumType: CaseIterable, EnumType: RawRepresentable, EnumType.RawValue == String {
         guard
             let readEnumInputStub = try readEnumInputStub?(),
             let enumValue = EnumType(rawValue: readEnumInputStub)
@@ -48,7 +51,7 @@ public final class MockInputReader: InputReading {
     
     // MARK: - Helpers
     
-    private func defaultEnumValue<EnumType>() throws -> EnumType where EnumType : CaseIterable {
+    private func defaultEnumValue<EnumType>() throws -> EnumType where EnumType: CaseIterable {
         guard let defaultEnumValue = EnumType.allCases.first else { throw InputReaderError.enumNotStubbed }
         return defaultEnumValue
     }

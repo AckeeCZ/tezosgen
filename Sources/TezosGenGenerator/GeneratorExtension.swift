@@ -2,7 +2,7 @@ import SPMUtility
 
 /// Available extensions for generating like convenience Combine methods, etc.
 public enum GeneratorExtension: String, ArgumentKind {
-    case combine = "combine"
+    case combine
     
     public static var completion: ShellCompletion = .none
     

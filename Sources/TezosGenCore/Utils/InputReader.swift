@@ -64,11 +64,12 @@ public final class InputReader: InputReading {
     
     // MARK: - Helpers
     
-    private func readRawInput<StringRawRepresentable: RawRepresentable, RawCollection: Collection>(options: RawCollection, question: String) throws -> StringRawRepresentable where StringRawRepresentable.RawValue == String, RawCollection.Element == StringRawRepresentable {
+    private func readRawInput<Raw: RawRepresentable, RawCollection: Collection>(options: RawCollection, question: String) throws -> Raw
+        where Raw.RawValue == String, RawCollection.Element == Raw {
         let acho = Acho<String>()
         guard
             let answer = acho.ask(question: question, options: options.map { $0.rawValue }),
-            let representedAnswer = StringRawRepresentable(rawValue: answer)
+            let representedAnswer = Raw(rawValue: answer)
         else { throw InputError.failedReading }
         return representedAnswer
     }
