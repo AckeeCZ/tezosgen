@@ -98,6 +98,13 @@ The standard usage looks like this `tezosgen HelloContract path_to_abi/abi.json 
 Please <strong>note</strong> that the output path option (`--output`) should be relative to your project - if your generated files are in `YourProjectName/MainFolder/GeneratedContracts` folder, then you should write `--output MainFolder/GeneratedContracts`
 For your projects to be bound you also <strong>must</strong> set the `--xcode` option as well. Otherwise you will have to drag the files to your projects manually.
 
+### Combine
+
+If you want to use the generated code with combine, just add this option when you are generating new code:
+```bash
+--extensions combine
+```
+
 ### Usage of Generated Codes
 
 The standard call using code created by `codegen` looks like this:
