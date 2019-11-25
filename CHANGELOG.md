@@ -1,5 +1,7 @@
 ## Next
 
+## 1.1.0
+
 ### Added
 
 - Adding Combine support https://github.com/AckeeCZ/tezosgen/pull/4 by @fortmarek
