@@ -31,6 +31,7 @@ final class ContractCodeGeneratorTests: TezosGenUnitTestCase {
                 self.send(from, amount, operationFees, completion)
             }
         }
+        
         """
         
         // When
@@ -38,6 +39,40 @@ final class ContractCodeGeneratorTests: TezosGenUnitTestCase {
         
         // Then
         XCTAssertEqual(try fileHandler.readTextFile(fileHandler.currentPath.appending(component: "SharedContract.swift")), expectedContents)
+    }
+    
+    func test_shared_contract_is_generated_with_combine() throws {
+        // Given
+        let expectedContents = """
+        // Generated using TezosGen
+
+        import TezosSwift
+        import Combine
+
+        struct ContractMethodInvocation {
+            private let send: (_ from: Wallet, _ amount: TezToken, _ operationFees: OperationFees?, _ completion: @escaping RPCCompletion<String>) -> Cancelable?
+
+            init(send: @escaping (_ from: Wallet, _ amount: TezToken, _ operationFees: OperationFees?, _ completion: @escaping RPCCompletion<String>) -> Cancelable?) {
+                self.send = send
+            }
+
+            func send(from: Wallet, amount: TezToken, operationFees: OperationFees? = nil, completion: @escaping RPCCompletion<String>) -> Cancelable? {
+                self.send(from, amount, operationFees, completion)
+            }
+            
+            func sendPublisher(from: Wallet, amount: TezToken, operationFees: OperationFees? = nil) -> ContractPublisher {
+                ContractPublisher(send: { self.send(from, amount, operationFees, $0) })
+            }
+        }
+        
+        """
+        
+        // When
+        try subject.generateSharedContract(path: fileHandler.currentPath, extensions: [.combine])
+        
+        // Then
+        XCTAssertEqual(try fileHandler.readTextFile(fileHandler.currentPath.appending(component: "SharedContract.swift")).replacingOccurrences(of: " ", with: ""),
+                       expectedContents.replacingOccurrences(of: " ", with: ""))
     }
     
     func test_contract_is_generated() throws {
@@ -86,6 +121,7 @@ final class ContractCodeGeneratorTests: TezosGenUnitTestCase {
         }
 
         /// Call this method to obtain contract status data
+        @discardableResult
         func status(completion: @escaping RPCCompletion<HelloContractStatus>) -> Cancelable? {
             let endpoint = "/chains/main/blocks/head/context/contracts/" + at
             return tezosClient.sendRPC(endpoint: endpoint, method: .get, completion: completion)

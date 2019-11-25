@@ -14,6 +14,7 @@ enum GenerateError: FatalError, Equatable {
     case contractDecodeFailed(AbsolutePath)
     case xcodeProjectNotFound(AbsolutePath)
     case invalidIndex(Int)
+    case noTargetsFound(AbsolutePath)
     
     var description: String {
         switch self {
@@ -27,6 +28,8 @@ enum GenerateError: FatalError, Equatable {
             return "Could not find Xcode project at \(path.pathString)"
         case let .invalidIndex(count):
             return "Input is invalid; must be a number between 1 and \(count)"
+        case let .noTargetsFound(path):
+            return "No targets found for project at \(path.pathString)"
         }
     }
     
@@ -44,6 +47,8 @@ enum GenerateError: FatalError, Equatable {
             return lhsPath == rhsPath
         case let (.invalidIndex(lhsCount), .invalidIndex(rhsCount)):
             return lhsCount == rhsCount
+        case let (.noTargetsFound(lhsPath), .noTargetsFound(rhsPath)):
+            return lhsPath == rhsPath
         default:
             return false
         }
@@ -59,6 +64,7 @@ final class GenerateCommand: NSObject, Command {
     private let fileArgument: PositionalArgument<String>
     private let outputArgument: OptionArgument<String>
     private let xcodeArgument: OptionArgument<String>
+    private let extensionsArgument: OptionArgument<[GeneratorExtension]>
     private let contractCodeGenerator: ContractCodeGenerating
 
     convenience init(parser: ArgumentParser) {
@@ -84,6 +90,11 @@ final class GenerateCommand: NSObject, Command {
                                       kind: String.self,
                                       usage: "Define location of .xcodeproj",
                                       completion: .filename)
+        extensionsArgument = subParser.add(option: "--extensions",
+                                            shortName: "-e",
+                                            kind: [GeneratorExtension].self,
+                                            strategy: .upToNextOption,
+                                            usage: "Define extensions for the generated code")
         self.contractCodeGenerator = contractCodeGenerator
     }
 
@@ -105,7 +116,7 @@ final class GenerateCommand: NSObject, Command {
                                                                                xcodePath: arguments.get(xcodeArgument))
 
         try contractCodeGenerator.generateContract(path: generatedSwiftCodePath, contract: contract, contractName: contractName)
-        try contractCodeGenerator.generateSharedContract(path: generatedSwiftCodePath)
+        try contractCodeGenerator.generateSharedContract(path: generatedSwiftCodePath, extensions: arguments.get(extensionsArgument) ?? [])
         
         // Do not bind files when project or swift code path is not given
         guard
@@ -118,7 +129,8 @@ final class GenerateCommand: NSObject, Command {
         let outputPath = RelativePath(outputPathString)
         
         let targets = try XcodeProjectController.shared.targets(projectPath: xcodePath)
-        let target = try chooseTargetIndex(from: targets)
+        guard !targets.isEmpty else { throw GenerateError.noTargetsFound(xcodePath) }
+        let target = try InputReader.shared.readInput(options: targets, question: "Choose target for the generated contract code:")
         
         let contractPath = generatedSwiftCodePath.appending(component: contractName + ".swift")
         let sharedContractPath = generatedSwiftCodePath.appending(component: "SharedContract.swift")

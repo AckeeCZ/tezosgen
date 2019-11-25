@@ -4,6 +4,7 @@ import class TuistSupport.FileHandler
 
 public protocol ContractCodeGenerating {
     func generateContract(path: AbsolutePath, contract: Contract, contractName: String) throws
+    func generateSharedContract(path: AbsolutePath, extensions: [GeneratorExtension]) throws
     func generateSharedContract(path: AbsolutePath) throws
 }
 
@@ -46,10 +47,33 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
     }
     
     public func generateSharedContract(path: AbsolutePath) throws {
+        try generateSharedContract(path: path, extensions: [])
+    }
+    
+    public func generateSharedContract(path: AbsolutePath, extensions: [GeneratorExtension]) throws {
+        let importExtensionContents = extensions.reduce("") { content, currentExtension in
+            switch currentExtension {
+            case .combine:
+                return content + "\nimport Combine"
+            }
+        }
+        
+        let additionalFunctionContents = extensions.reduce("") { content, currentExtension in
+            switch currentExtension {
+            case .combine:
+                return content + """
+                    
+                    
+                    func sendPublisher(from: Wallet, amount: TezToken, operationFees: OperationFees? = nil) -> ContractPublisher {
+                        ContractPublisher(send: { self.send(from, amount, operationFees, $0) })
+                    }
+                """
+            }
+        }
         let contents = """
         // Generated using TezosGen
 
-        import TezosSwift
+        import TezosSwift\(importExtensionContents)
 
         struct ContractMethodInvocation {
             private let send: (_ from: Wallet, _ amount: TezToken, _ operationFees: OperationFees?, _ completion: @escaping RPCCompletion<String>) -> Cancelable?
@@ -60,13 +84,16 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
 
             func send(from: Wallet, amount: TezToken, operationFees: OperationFees? = nil, completion: @escaping RPCCompletion<String>) -> Cancelable? {
                 self.send(from, amount, operationFees, completion)
-            }
+            }\(additionalFunctionContents)
         }
+        
         """
         
         let sharedContractPath = path.appending(component: "SharedContract.swift")
         try FileHandler.shared.write(contents, path: sharedContractPath, atomically: true)
     }
+    
+    // MARK: - Helpers
     
     // swiftlint:disable:next function_body_length
     private func generateContract(path: AbsolutePath,
@@ -148,6 +175,7 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
         
         
             /// Call this method to obtain contract status data
+            @discardableResult
             func status(completion: @escaping RPCCompletion<
         """
         

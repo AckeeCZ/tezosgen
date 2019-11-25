@@ -11,6 +11,7 @@ let package = Package(
     dependencies: [
         // Tapestry
         .package(url: "https://github.com/AckeeCZ/tapestry.git", .branch("master")),
+        .package(url: "https://github.com/realm/SwiftLint.git", .branch("master"))
     ],
     targets: [
         .target(name: "TapestryConfig",
