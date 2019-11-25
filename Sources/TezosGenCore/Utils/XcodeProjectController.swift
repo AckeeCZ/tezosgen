@@ -8,6 +8,8 @@ public protocol XcodeProjectControlling {
 
 public final class XcodeProjectController: XcodeProjectControlling {
     
+    public init() { }
+    
     /// Shared instance
     public static var shared: XcodeProjectControlling = XcodeProjectController()
     

@@ -19,6 +19,8 @@ public class Printer: Printing {
     public static var shared: Printing = Printer()
 
     // MARK: - Public
+    
+    public init() { }
 
     public func print(_ text: String) {
         printStandardOutputLine(text)

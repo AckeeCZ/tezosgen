@@ -1,6 +1,6 @@
 import Basic
 import XCTest
-@testable import TezosGenCore
+import TezosGenCore
 @testable import TezosGenCoreTesting
 @testable import TezosGenGenerator
 

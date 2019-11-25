@@ -1,6 +1,6 @@
 import Foundation
 import XCTest
-@testable import TezosGenCore
+import TezosGenCore
 
 public class TezosGenUnitTestCase: TezosGenTestCase {
     public var system: MockSystem!

@@ -1,7 +1,7 @@
 import Basic
 import Foundation
 import XCTest
-@testable import TezosGenCore
+import TezosGenCore
 
 public class TezosGenTestCase: XCTestCase {
     fileprivate var temporaryDirectory: TemporaryDirectory!

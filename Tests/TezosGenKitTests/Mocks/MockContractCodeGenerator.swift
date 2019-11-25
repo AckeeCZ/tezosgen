@@ -1,5 +1,5 @@
 import Basic
-@testable import TezosGenCore
+import TezosGenCore
 @testable import TezosGenGenerator
 
 final class MockContractCodeGenerator: ContractCodeGenerating {

@@ -4,7 +4,7 @@ import SPMUtility
 import class XcodeProj.PBXNativeTarget
 @testable import TezosGenCoreTesting
 @testable import TezosGenGenerator
-@testable import TezosGenCore
+import TezosGenCore
 @testable import TezosGenKit
 
 class GenerateCommandTests: TezosGenUnitTestCase {
