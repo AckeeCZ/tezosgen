@@ -16,8 +16,8 @@ Pod::Spec.new do |s|
     s.author           = { 'Ackee' => 'info@ackee.cz' }
     s.source = { http: "https://github.com/AckeeCZ/tezosgen/releases/download/#{s.version}/tezosgen-#{s.version}.zip" }
     s.preserve_paths = '*'
-    s.ios.deployment_target = "10.0"
+    s.ios.deployment_target = "13.0"
     s.swift_version = "5.1"
-    s.dependency 'TezosSwift', '~> 1.0'
+    s.dependency 'TezosSwift', '~> 1.1'
   end
   
