@@ -30,7 +30,7 @@ $ tezosgen
 <details>
 <summary>Via <strong>CocoaPods</strong></summary>
 
-If you're using CocoaPods, you can simply add `pod 'tezosgen' ~> 1.1.0` to your `Podfile`.
+If you're using CocoaPods, you can simply add `pod 'TezosGen' ~> 1.1.0` to your `Podfile`.
 
 This will download the `tezosgen` binaries and dependencies in `Pods/` during your next `pod install` execution.
 

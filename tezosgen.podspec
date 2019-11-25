@@ -1,5 +1,5 @@
 Pod::Spec.new do |s|
-    s.name             = 'tezosgen'
+    s.name             = 'TezosGen'
     s.version          = '1.1.0'
     s.summary          = 'Generate code from abi.json'
   
