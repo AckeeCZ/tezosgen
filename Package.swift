@@ -10,6 +10,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/fortmarek/tuist.git", .branch("master")),
+        .package(url: "https://github.com/fortmarek/acho", .branch("master"))
     ],
     targets: [
         .target(
@@ -20,7 +21,8 @@ let package = Package(
         .target(
             name: "TezosGenCore",
             dependencies: [
-                "TuistGenerator"
+                "TuistGenerator",
+                "acho",
             ]),
         .target(
             name: "TezosGenGenerator",

@@ -2,12 +2,30 @@
   "object": {
     "pins": [
       {
+        "package": "acho",
+        "repositoryURL": "https://github.com/fortmarek/acho",
+        "state": {
+          "branch": "master",
+          "revision": "7a5882aac1d2b8bacb8c7c41b09687a49e60d558",
+          "version": null
+        }
+      },
+      {
         "package": "AEXML",
         "repositoryURL": "https://github.com/tadija/AEXML",
         "state": {
           "branch": null,
           "revision": "e4d517844dd03dac557e35d77a8e9ab438de91a6",
           "version": "4.4.0"
+        }
+      },
+      {
+        "package": "ColorizeSwift",
+        "repositoryURL": "https://github.com/mtynior/ColorizeSwift.git",
+        "state": {
+          "branch": "master",
+          "revision": "7492d039d594daccc39cacea343eed6cc9d1ed5a",
+          "version": null
         }
       },
       {
