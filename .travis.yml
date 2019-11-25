@@ -9,6 +9,8 @@ script:
 - pod setup
 - pod lib lint --skip-import-validation --skip-tests --allow-warnings
 before_deploy:
+- gem update cocoapods
+- gem update cocoapods-trunk
 - swift build --static-swift-stdlib --configuration release
 - export BINARY_PATH=`swift build --show-bin-path --configuration release`/$FRAMEWORK_NAME
 - mv "$BINARY_PATH" .
