@@ -1,10 +1,10 @@
 # tezosgen
 
 [![CI Status](http://img.shields.io/travis/AckeeCZ/tezosgen.svg?style=flat)](https://travis-ci.com/AckeeCZ/tezosgen)
-[![Version](https://img.shields.io/cocoapods/v/tezosgen.svg?style=flat)](http://cocoapods.org/pods/tezosgen)
-[![License](https://img.shields.io/cocoapods/l/tezosgen.svg?style=flat)](http://cocoapods.org/pods/tezosgen)
+[![Version](https://img.shields.io/cocoapods/v/tezosgen.svg?style=flat)](http://cocoapods.org/pods/TezosGen)
+[![License](https://img.shields.io/cocoapods/l/tezosgen.svg?style=flat)](http://cocoapods.org/pods/TezosGen)
 [![Swift Package Manager compatible](https://img.shields.io/badge/SPM-compatible-brightgreen.svg?style=flat&colorA=28a745&&colorB=4E4E4E)](https://github.com/apple/swift-package-manager)
-[![Platform](https://img.shields.io/cocoapods/p/tezosgen.svg?style=flat)](http://cocoapods.org/pods/tezosgen)
+[![Platform](https://img.shields.io/cocoapods/p/tezosgen.svg?style=flat)](http://cocoapods.org/pods/TezosGen)
 
 ## What's tezosgen
 
