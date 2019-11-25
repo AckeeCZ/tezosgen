@@ -2,6 +2,7 @@
 
 ### Added
 
+- Adding Combine support https://github.com/AckeeCZ/tezosgen/pull/4 by @fortmarek
 - Return cancelable from calls https://github.com/AckeeCZ/tezosgen/pull/3 by @fortmarek
 
 ### Changed
