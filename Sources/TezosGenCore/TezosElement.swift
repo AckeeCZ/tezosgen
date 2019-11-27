@@ -43,7 +43,7 @@ extension TezosElement {
     public var generatedTypeString: String {
         switch type {
         case .unit:
-            return "Void"
+            return "Never"
         case .string:
             return "String"
         case .int:
