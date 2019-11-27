@@ -37,7 +37,7 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
                              arguments: args,
                              storageType: contract.storage.generatedSwiftTypeString,
                              storageInternalType: contract.storage.generatedTypeString,
-                             paramaterType: contract.parameter.generatedTypeString,
+                             parameterType: contract.parameter.generatedTypeString,
                              contractParams: params,
                              checks: checks,
                              contractInit: renderedInit.0,
@@ -95,13 +95,59 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
     
     // MARK: - Helpers
     
+    private func generateContractCall(contractName: String,
+                                      callName: String,
+                                      contractParams: String,
+                                      checks: String?,
+                                      contractInit: String,
+                                      parameterType: String) -> String {
+        var contents =
+        """
+        
+            
+            /**
+             Call \(contractName) with specified params.
+             **Important:**
+             Params are in the order of how they are specified in the Tezos structure tree
+            */
+            func \(callName)(\(contractParams)) -> ContractMethodInvocation {
+                let send: (_ from: Wallet, _ amount: TezToken, _ operationFees: OperationFees?, _ completion: @escaping RPCCompletion<String>) -> Cancelable?
+        """
+        if let checks = checks {
+            contents +=
+            """
+                
+                    guard \(checks) else {
+                        send = { from, amount, operationFees, completion in
+                            completion(.failure(.parameterError(reason: .orError)))
+                            return AnyCancelable { }
+                        }
+                        return ContractMethodInvocation(send: send)
+                    }
+            """
+        }
+        contents +=
+        """
+        
+                let input: \(parameterType) = \(contractInit)
+                send = { from, amount, operationFees, completion in
+                    self.tezosClient.send(amount: amount, to: self.at, from: from, input: input, operationFees: operationFees, completion: completion)
+                }
+
+                return ContractMethodInvocation(send: send)
+            }
+        """
+        
+        return contents
+    }
+    
     // swiftlint:disable:next function_body_length
     private func generateContract(path: AbsolutePath,
                                   contractName: String,
                                   arguments: String,
                                   storageType: String,
                                   storageInternalType: String,
-                                  paramaterType: String?,
+                                  parameterType: String?,
                                   contractParams: String,
                                   checks: String?,
                                   contractInit: String,
@@ -125,43 +171,13 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
                self.at = at
             }
         """
-        if let paramaterType = paramaterType {
-            contents +=
-            """
-            
-                
-                /**
-                 Call \(contractName) with specified params.
-                 **Important:**
-                 Params are in the order of how they are specified in the Tezos structure tree
-                */
-                func call(\(contractParams)) -> ContractMethodInvocation {
-                    let send: (_ from: Wallet, _ amount: TezToken, _ operationFees: OperationFees?, _ completion: @escaping RPCCompletion<String>) -> Cancelable?
-            """
-            if let checks = checks {
-                contents +=
-                """
-                    
-                        guard \(checks) else {
-                            send = { from, amount, operationFees, completion in
-                                completion(.failure(.parameterError(reason: .orError)))
-                                return AnyCancelable { }
-                            }
-                            return ContractMethodInvocation(send: send)
-                        }
-                """
-            }
-            contents +=
-            """
-            
-                    let input: \(paramaterType) = \(contractInit)
-                    send = { from, amount, operationFees, completion in
-                        self.tezosClient.send(amount: amount, to: self.at, from: from, input: input, operationFees: operationFees, completion: completion)
-                    }
-
-                    return ContractMethodInvocation(send: send)
-                }
-            """
+        if let parameterType = parameterType {
+            contents += generateContractCall(contractName: contractName,
+                                             callName: "call",
+                                             contractParams: contractParams,
+                                             checks: checks,
+                                             contractInit: contractInit,
+                                             parameterType: parameterType)
         } else {
             contents +=
             """
