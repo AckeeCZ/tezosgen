@@ -260,6 +260,10 @@ extension TezosElement {
             index += 1
             let argName = name ?? "arg\(index)"
             args.append("self.\(argName) = \(currentlyRendered).sorted()")
+        case .map:
+            index += 1
+            let argName = name ?? "arg\(index)"
+            args.append("self.\(argName) = \(currentlyRendered).pairs.map { ($0.first, $0.second) }")
         default:
             index += 1
             let argName = name ?? "arg\(index)"
