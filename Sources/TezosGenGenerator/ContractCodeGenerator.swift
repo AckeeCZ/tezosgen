@@ -15,7 +15,7 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
     
     public func generateContract(path: AbsolutePath, contract: Contract, contractName: String) throws {
         let params = contract.parameter.renderToSwift().enumerated().map { ($1.1 ?? "param\($0 + 1)") + ": \($1.0)" }.joined(separator: ", ")
-        let args = contract.storage.renderToSwift().enumerated().map { ($1.1 ?? "let arg\($0 + 1)") + ": \($1.0)"}.joined(separator: "\n\t")
+        let args = contract.storage.renderToSwift().enumerated().map { "let " + ($1.1 ?? "arg\($0 + 1)") + ": \($1.0)"}.joined(separator: "\n\t")
         let renderedInit = contract.parameter.renderInitToSwift()
         let initArgs = contract.storage.renderArgsToSwift().joined(separator: "\n\t\t")
         
@@ -214,7 +214,7 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
                 /// \(contractName)'s current operation counter
                 let counter: Int
                 /// \(contractName)'s storage
-                let storage:
+                let storage: 
             """
             if isSimple {
                 contents += """
