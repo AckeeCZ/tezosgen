@@ -141,17 +141,19 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
             if let checks = checks {
                 contents +=
                 """
-                    guard \(checks) else {
-                        send = { from, amount, operationFees, completion in
-                            completion(.failure(.parameterError(reason: .orError)))
+                    
+                        guard \(checks) else {
+                            send = { from, amount, operationFees, completion in
+                                completion(.failure(.parameterError(reason: .orError)))
+                                return AnyCancelable { }
+                            }
+                            return ContractMethodInvocation(send: send)
                         }
-                        return ContractMethodInvocation(send: send)
-                    }
                 """
             }
             contents +=
             """
-                
+            
                     let input: \(paramaterType) = \(contractInit)
                     send = { from, amount, operationFees, completion in
                         self.tezosClient.send(amount: amount, to: self.at, from: from, input: input, operationFees: operationFees, completion: completion)
@@ -214,7 +216,7 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
                 /// \(contractName)'s current operation counter
                 let counter: Int
                 /// \(contractName)'s storage
-                let storage: 
+                let storage:
             """
             if isSimple {
                 contents += """
