@@ -100,7 +100,7 @@ extension TezosElement {
         switch type {
         case .map, .bigMap:
             guard let first = args.first, let second = args.last else { return "" }
-            return "[(\(first.generatedTypeString), \(second.generatedTypeString))]"
+            return "[\(first.generatedTypeString): \(second.generatedTypeString)]"
         default:
             return generatedTypeString
         }
@@ -263,7 +263,7 @@ extension TezosElement {
         case .map:
             index += 1
             let argName = name ?? "arg\(index)"
-            args.append("self.\(argName) = \(currentlyRendered).pairs.map { ($0.first, $0.second) }")
+            args.append("self.\(argName) = \(currentlyRendered).pairs.reduce([:], { var mutable = $0; mutable[$1.first] = $1.second; return mutable })")
         default:
             index += 1
             let argName = name ?? "arg\(index)"
