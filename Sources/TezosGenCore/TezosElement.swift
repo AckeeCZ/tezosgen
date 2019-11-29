@@ -1,5 +1,5 @@
 public class TezosElement: Decodable {
-    public let name: String?
+    public var name: String?
     public let type: TezosPrimaryType
     public let args: [TezosElement]
 

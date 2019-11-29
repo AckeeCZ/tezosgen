@@ -86,7 +86,18 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
     private func generateContractCall(contractName: String,
                                       contractCall: ContractCall) -> String {
         
-        let contractParams = contractCall.parameter.renderToSwift().filter { $0.0 != "Never" }.enumerated().map { ($1.1 ?? "param\($0 + 1)") + ": \($1.0)" }.joined(separator: ", ")
+        let contractParams = contractCall.parameter.renderToSwift()
+            .filter { $0.0 != "Never" }
+            .enumerated()
+            .map {
+                ($1.1 ?? "param\($0 + 1)") + ": \($1.0)"
+            }
+        let contractParamsString: String
+        if contractParams.count == 1 {
+            contractParamsString = "_ " + contractParams.joined(separator: ", ")
+        } else {
+            contractParamsString = contractParams.joined(separator: ", ")
+        }
         let contractInit = contractCall.parameter.renderInitToSwift()
         let parameterType = contractCall.parameter.generatedTypeString
 
@@ -99,14 +110,13 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
         
         var contents =
         """
-        
             
             /**
              Call \(contractName) with specified params.
              **Important:**
              Params are in the order of how they are specified in the Tezos structure tree
             */
-            func \(contractCall.name ?? "call")(\(contractParams)) -> ContractMethodInvocation {
+            func \(contractCall.name ?? "call")(\(contractParamsString)) -> ContractMethodInvocation {
                 let send: (_ from: Wallet, _ amount: TezToken, _ operationFees: OperationFees?, _ completion: @escaping RPCCompletion<String>) -> Cancelable?
         """
         if let checks = checks {
@@ -137,7 +147,7 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
             contents +=
             """
             
-                    let input: \(parameterType) = \(contractInit)
+                    let input: \(parameterType) = \(contractInit.0)
                     send = { from, amount, operationFees, completion in
                         self.tezosClient.send(amount: amount, to: self.at, from: from, input: input, operationFees: operationFees, completion: completion)
                     }

@@ -32,7 +32,9 @@ private struct ContractCalls: Decodable {
         default:
             let annotations = try container.decodeIfPresent([String].self, forKey: .annots)
             let name = annotations?.first?.replacingOccurrences(of: ":", with: "").replacingOccurrences(of: "%", with: "")
-            let parameter = try TezosElement(from: decoder)
+            var parameter = try TezosElement(from: decoder)
+            // Rewrite `.name` since it belongs to the contract
+            parameter.name = nil
             calls = [ContractCall(name: name, parameter: parameter)]
         }
     }
@@ -56,7 +58,7 @@ public struct Contract: Decodable {
         switch type {
         case .or:
             var args = try values.nestedUnkeyedContainer(forKey: .args)
-            calls = try args.decode(ContractCalls.self).calls
+            calls = try args.decode(ContractCalls.self).calls + (try args.decode(ContractCalls.self).calls)
         default:
             let parameter = try container.decode(TezosElement.self, forKey: .parameter)
             calls = [ContractCall(parameter: parameter)]
