@@ -14,19 +14,10 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
     public init() { }
     
     public func generateContract(path: AbsolutePath, contract: Contract, contractName: String) throws {
-        let params = contract.parameter.renderToSwift().enumerated().map { ($1.1 ?? "param\($0 + 1)") + ": \($1.0)" }.joined(separator: ", ")
         let args = contract.storage.renderToSwift().enumerated().map { "let " + ($1.1 ?? "arg\($0 + 1)") + ": \($1.0)"}.joined(separator: "\n\t")
-        let renderedInit = contract.parameter.renderInitToSwift()
         let initArgs = contract.storage.renderArgsToSwift().joined(separator: "\n\t\t")
         
         let key: String? = contract.storage.key
-
-        let checks: String?
-        if !renderedInit.1.isEmpty {
-            checks = renderedInit.1.enumerated().map { "let tezosOr\($0 + 1) = \($1)" }.joined(separator: ", ")
-        } else {
-            checks = nil
-        }
         
         if !FileHandler.shared.exists(path) {
             try FileHandler.shared.createFolder(path)
@@ -34,13 +25,10 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
         
         try generateContract(path: path,
                              contractName: contractName,
+                             contractCalls: contract.calls,
                              arguments: args,
                              storageType: contract.storage.generatedSwiftTypeString,
                              storageInternalType: contract.storage.generatedTypeString,
-                             parameterType: contract.parameter.generatedTypeString,
-                             contractParams: params,
-                             checks: checks,
-                             contractInit: renderedInit.0,
                              contractInitArguments: initArgs,
                              isSimple: contract.storage.isSimple,
                              key: key)
@@ -96,11 +84,19 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
     // MARK: - Helpers
     
     private func generateContractCall(contractName: String,
-                                      callName: String,
-                                      contractParams: String,
-                                      checks: String?,
-                                      contractInit: String,
-                                      parameterType: String) -> String {
+                                      contractCall: ContractCall) -> String {
+        
+        let contractParams = contractCall.parameter.renderToSwift().enumerated().map { ($1.1 ?? "param\($0 + 1)") + ": \($1.0)" }.joined(separator: ", ")
+        let contractInit = contractCall.parameter.renderInitToSwift()
+        let parameterType = contractCall.parameter.generatedTypeString
+
+        let checks: String?
+        if !contractInit.1.isEmpty {
+            checks = contractInit.1.enumerated().map { "let tezosOr\($0 + 1) = \($1)" }.joined(separator: ", ")
+        } else {
+            checks = nil
+        }
+        
         var contents =
         """
         
@@ -110,7 +106,7 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
              **Important:**
              Params are in the order of how they are specified in the Tezos structure tree
             */
-            func \(callName)(\(contractParams)) -> ContractMethodInvocation {
+            func \(contractCall.name ?? "call")(\(contractParams)) -> ContractMethodInvocation {
                 let send: (_ from: Wallet, _ amount: TezToken, _ operationFees: OperationFees?, _ completion: @escaping RPCCompletion<String>) -> Cancelable?
         """
         if let checks = checks {
@@ -144,13 +140,10 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
     // swiftlint:disable:next function_body_length
     private func generateContract(path: AbsolutePath,
                                   contractName: String,
+                                  contractCalls: [ContractCall],
                                   arguments: String,
                                   storageType: String,
                                   storageInternalType: String,
-                                  parameterType: String?,
-                                  contractParams: String,
-                                  checks: String?,
-                                  contractInit: String,
                                   contractInitArguments: String,
                                   isSimple: Bool,
                                   key: String?) throws {
@@ -171,13 +164,12 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
                self.at = at
             }
         """
-        if let parameterType = parameterType {
-            contents += generateContractCall(contractName: contractName,
-                                             callName: "call",
-                                             contractParams: contractParams,
-                                             checks: checks,
-                                             contractInit: contractInit,
-                                             parameterType: parameterType)
+        if !contractCalls.isEmpty {
+            contents += contractCalls
+                .map {
+                    generateContractCall(contractName: contractName,
+                                        contractCall: $0)
+                }.joined(separator: "\n")
         } else {
             contents +=
             """
