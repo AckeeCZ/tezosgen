@@ -86,7 +86,7 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
     private func generateContractCall(contractName: String,
                                       contractCall: ContractCall) -> String {
         
-        let contractParams = contractCall.parameter.renderToSwift().enumerated().map { ($1.1 ?? "param\($0 + 1)") + ": \($1.0)" }.joined(separator: ", ")
+        let contractParams = contractCall.parameter.renderToSwift().filter { $0.0 != "Never" }.enumerated().map { ($1.1 ?? "param\($0 + 1)") + ": \($1.0)" }.joined(separator: ", ")
         let contractInit = contractCall.parameter.renderInitToSwift()
         let parameterType = contractCall.parameter.generatedTypeString
 
@@ -122,17 +122,30 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
                     }
             """
         }
-        contents +=
-        """
-        
-                let input: \(parameterType) = \(contractInit)
-                send = { from, amount, operationFees, completion in
-                    self.tezosClient.send(amount: amount, to: self.at, from: from, input: input, operationFees: operationFees, completion: completion)
-                }
+        if contractParams.isEmpty {
+            contents +=
+            """
+            
+                    send = { from, amount, operationFees, completion in
+                        self.tezosClient.send(amount: amount, to: self.at, from: from, operationFees: operationFees, completion: completion)
+                    }
 
-                return ContractMethodInvocation(send: send)
-            }
-        """
+                    return ContractMethodInvocation(send: send)
+                }
+            """
+        } else {
+            contents +=
+            """
+            
+                    let input: \(parameterType) = \(contractInit)
+                    send = { from, amount, operationFees, completion in
+                        self.tezosClient.send(amount: amount, to: self.at, from: from, input: input, operationFees: operationFees, completion: completion)
+                    }
+
+                    return ContractMethodInvocation(send: send)
+                }
+            """
+        }
         
         return contents
     }
