@@ -50,7 +50,7 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
             switch currentExtension {
             case .combine:
                 return content + """
-                    
+                
                     
                     func sendPublisher(from: Wallet, amount: TezToken, operationFees: OperationFees? = nil) -> ContractPublisher<String> {
                         ContractPublisher(send: { self.send(from, amount, operationFees, $0) })
@@ -247,7 +247,7 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
                 /// \(contractName)'s current operation counter
                 let counter: Int
                 /// \(contractName)'s storage
-                let storage: 
+                let storage:
             """
             if isSimple {
                 contents += """

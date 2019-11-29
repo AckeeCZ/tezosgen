@@ -42,8 +42,11 @@ final class ContractCodeGeneratorTests: TezosGenUnitTestCase {
     }
     
     func test_shared_contract_is_generated_with_combine() throws {
-        // Given
-        let expectedContents = """
+        // When
+        try subject.generateSharedContract(path: fileHandler.currentPath, extensions: [.combine])
+        
+        // Then
+        XCTAssertMultilineEqual(try fileHandler.readTextFile(fileHandler.currentPath.appending(component: "SharedContract.swift")), multiline: """
         // Generated using TezosGen
 
         import TezosSwift
@@ -65,14 +68,7 @@ final class ContractCodeGeneratorTests: TezosGenUnitTestCase {
             }
         }
         
-        """
-        
-        // When
-        try subject.generateSharedContract(path: fileHandler.currentPath, extensions: [.combine])
-        
-        // Then
-        XCTAssertEqual(try fileHandler.readTextFile(fileHandler.currentPath.appending(component: "SharedContract.swift")).replacingOccurrences(of: " ", with: ""),
-                       expectedContents.replacingOccurrences(of: " ", with: ""))
+        """)
     }
     
     func test_contract_is_generated() throws {
