@@ -1,15 +1,5 @@
 import Foundation
 
-public struct ContractCall: Decodable {
-    public let name: String?
-    public let parameter: TezosElement
-    
-    init(name: String? = nil, parameter: TezosElement) {
-        self.name = name
-        self.parameter = parameter
-    }
-}
-
 /// Type to decode `[ContractCall]` which is encapsulated in a nested `or` michelson types
 private struct ContractCalls: Decodable {
     let calls: [ContractCall]
@@ -32,7 +22,7 @@ private struct ContractCalls: Decodable {
         default:
             let annotations = try container.decodeIfPresent([String].self, forKey: .annots)
             let name = annotations?.first?.replacingOccurrences(of: ":", with: "").replacingOccurrences(of: "%", with: "")
-            var parameter = try TezosElement(from: decoder)
+            let parameter = try TezosElement(from: decoder)
             // Rewrite `.name` since it belongs to the contract
             parameter.name = nil
             calls = [ContractCall(name: name, parameter: parameter)]
@@ -49,6 +39,11 @@ public struct Contract: Decodable {
         case parameter
         case args
         case prim
+    }
+    
+    public init(calls: [ContractCall], storage: TezosElement) {
+        self.calls = calls
+        self.storage = storage
     }
 
     public init(from decoder: Decoder) throws {
