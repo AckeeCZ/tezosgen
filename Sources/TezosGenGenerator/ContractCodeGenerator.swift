@@ -70,6 +70,7 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
                 self.send = send
             }
 
+            @discardableResult
             func send(from: Wallet, amount: TezToken, operationFees: OperationFees? = nil, completion: @escaping RPCCompletion<String>) -> Cancelable? {
                 self.send(from, amount, operationFees, completion)
             }\(additionalFunctionContents)
@@ -247,7 +248,7 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
                 /// \(contractName)'s current operation counter
                 let counter: Int
                 /// \(contractName)'s storage
-                let storage: 
+                let storage:
             """
             if isSimple {
                 contents += """
