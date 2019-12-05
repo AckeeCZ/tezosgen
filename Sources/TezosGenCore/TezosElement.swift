@@ -184,7 +184,8 @@ extension TezosElement {
             return "nil" + suffix
         case .map:
             index += 1
-            return "TezosMap(pairs: param\(index).map { TezosPair(first: $0.0, second: $0.1) })" + suffix
+            let paramName: String = name ?? "param\(index)"
+            return "TezosMap(pairs: \(paramName).map { TezosPair(first: $0.0, second: $0.1) })" + suffix
         default:
             index += 1
             var paramName: String = name ?? "param\(index)"
