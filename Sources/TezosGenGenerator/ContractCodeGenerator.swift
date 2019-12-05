@@ -280,7 +280,7 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
                 } else if key == "map" || key == "big_map" {
                     contents += """
                     
-                            self.storage = try scriptContainer.decode(\(storageInternalType).self, forKey: .storage).pairs.map { ($0.first, $0.second) }
+                            self.storage = try scriptContainer.decode(\(storageInternalType).self, forKey: .storage).pairs.reduce([:], { var mutable = $0; mutable[$1.first] = $1.second; return mutable })
                     """
                 } else {
                     contents += """
