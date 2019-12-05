@@ -247,7 +247,7 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
                 /// \(contractName)'s current operation counter
                 let counter: Int
                 /// \(contractName)'s storage
-                let storage:
+                let storage: 
             """
             if isSimple {
                 contents += """
