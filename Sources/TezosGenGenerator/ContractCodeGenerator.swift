@@ -87,7 +87,7 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
                                       contractCall: ContractCall) -> String {
         
         let contractParams = contractCall.parameter.renderToSwift()
-            .filter { $0.0 != "Never" }
+            .filter { $0.0 != "Never?" }
             .enumerated()
             .map {
                 ($1.1 ?? "param\($0 + 1)") + ": \($1.0)"
@@ -285,7 +285,7 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
                 } else {
                     contents += """
                     
-                            self.storage = try scriptContainer.nestedContainer(keyedBy: StorageKeys.self, forKey: .storage).decodeRPC(\(storageType)).self)
+                            self.storage = try scriptContainer.nestedContainer(keyedBy: StorageKeys.self, forKey: .storage).decodeRPC(\(storageType).self)
                     """
                 }
             } else if key == nil {

@@ -43,7 +43,7 @@ extension TezosElement {
     public var generatedTypeString: String {
         switch type {
         case .unit:
-            return "Never"
+            return "Never?"
         case .string:
             return "String"
         case .int:
@@ -178,20 +178,29 @@ extension TezosElement {
         return renderedElements
     }
 
-    private func renderSimpleInitToSwift(index: Int, suffix: String) -> String {
-        var paramName: String = name ?? "param\(index)"
-        if type == .set {
-            paramName += ".sorted()"
+    private func renderSimpleInitToSwift(index: inout Int, suffix: String) -> String {
+        switch type {
+        case .unit:
+            return "nil" + suffix
+        case .map:
+            index += 1
+            return "TezosMap(pairs: param\(index).map { TezosPair(first: $0.0, second: $0.1) })" + suffix
+        default:
+            index += 1
+            var paramName: String = name ?? "param\(index)"
+            if type == .set {
+                paramName += ".sorted()"
+            }
+            return paramName + suffix
         }
-        return paramName + suffix
     }
 
     private func renderInitPairElementToSwift(index: inout Int, renderedInit: inout String, orChecks: inout [String], suffix: String) {
         switch type {
-        case .pair, .or: renderInitElementToSwift(index: &index, renderedInit: &renderedInit, orChecks: &orChecks)
+        case .pair, .or:
+            renderInitElementToSwift(index: &index, renderedInit: &renderedInit, orChecks: &orChecks)
         default:
-            index += 1
-            renderedInit += renderSimpleInitToSwift(index: index, suffix: suffix)
+            renderedInit += renderSimpleInitToSwift(index: &index, suffix: suffix)
         }
     }
 
@@ -222,8 +231,7 @@ extension TezosElement {
             }
             args.first?.renderInitElementToSwift(index: &index, renderedInit: &renderedInit, orChecks: &orChecks)
         default:
-            index += 1
-            renderedInit += renderSimpleInitToSwift(index: index, suffix: "")
+            renderedInit += renderSimpleInitToSwift(index: &index, suffix: "")
         }
     }
 
