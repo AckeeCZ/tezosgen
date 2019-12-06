@@ -14,8 +14,11 @@ final class ContractCodeGeneratorTests: TezosGenUnitTestCase {
     }
     
     func test_shared_contract_is_generated() throws {
-        // Given
-        let expectedContents = """
+        // When
+        try subject.generateSharedContract(path: fileHandler.currentPath)
+        
+        // Then
+        XCTAssertMultilineEqual(try fileHandler.readTextFile(fileHandler.currentPath.appending(component: "SharedContract.swift")), multiline: """
         // Generated using TezosGen
 
         import TezosSwift
@@ -27,18 +30,13 @@ final class ContractCodeGeneratorTests: TezosGenUnitTestCase {
                 self.send = send
             }
 
+            @discardableResult
             func send(from: Wallet, amount: TezToken, operationFees: OperationFees? = nil, completion: @escaping RPCCompletion<String>) -> Cancelable? {
                 self.send(from, amount, operationFees, completion)
             }
         }
         
-        """
-        
-        // When
-        try subject.generateSharedContract(path: fileHandler.currentPath)
-        
-        // Then
-        XCTAssertEqual(try fileHandler.readTextFile(fileHandler.currentPath.appending(component: "SharedContract.swift")), expectedContents)
+        """)
     }
     
     func test_shared_contract_is_generated_with_combine() throws {
@@ -59,6 +57,7 @@ final class ContractCodeGeneratorTests: TezosGenUnitTestCase {
                 self.send = send
             }
 
+            @discardableResult
             func send(from: Wallet, amount: TezToken, operationFees: OperationFees? = nil, completion: @escaping RPCCompletion<String>) -> Cancelable? {
                 self.send(from, amount, operationFees, completion)
             }

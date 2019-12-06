@@ -14,10 +14,10 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
     public init() { }
     
     public func generateContract(path: AbsolutePath, contract: Contract, contractName: String) throws {
-        let args = contract.storage.renderToSwift().enumerated().map { "let " + ($1.1 ?? "arg\($0 + 1)") + ": \($1.0)"}.joined(separator: "\n\t")
-        let initArgs = contract.storage.renderArgsToSwift().joined(separator: "\n\t\t")
-        
-        let key: String? = contract.storage.key
+        // TODO:
+//        let container = try decoder.container(keyedBy: StorageKeys.self)
+//        var nestedContainer = try container.nestedUnkeyedContainer(forKey: .args)
+//        let tezosElement = try nestedContainer.decode(TezosPair<Bool, Bool>?.self)
         
         if !FileHandler.shared.exists(path) {
             try FileHandler.shared.createFolder(path)
@@ -25,13 +25,7 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
         
         try generateContract(path: path,
                              contractName: contractName,
-                             contractCalls: contract.calls,
-                             arguments: args,
-                             storageType: contract.storage.generatedSwiftTypeString,
-                             storageInternalType: contract.storage.generatedTypeString,
-                             contractInitArguments: initArgs,
-                             isSimple: contract.storage.isSimple,
-                             key: key)
+                             contract: contract)
     }
     
     public func generateSharedContract(path: AbsolutePath) throws {
@@ -164,13 +158,7 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
     // swiftlint:disable:next function_body_length
     private func generateContract(path: AbsolutePath,
                                   contractName: String,
-                                  contractCalls: [ContractCall],
-                                  arguments: String,
-                                  storageType: String,
-                                  storageInternalType: String,
-                                  contractInitArguments: String,
-                                  isSimple: Bool,
-                                  key: String?) throws {
+                                  contract: Contract) throws {
         var contents = """
         // Generated using TezosGen
         // swiftlint:disable file_length
@@ -188,8 +176,8 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
                self.at = at
             }
         """
-        if !contractCalls.isEmpty {
-            contents += contractCalls
+        if !contract.calls.isEmpty {
+            contents += contract.calls
                 .map {
                     generateContractCall(contractName: contractName,
                                         contractCall: $0)
@@ -213,7 +201,7 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
             func status(completion: @escaping RPCCompletion<
         """
         
-        if storageType != "Void" {
+        if contract.storage.type != .unit {
             contents += """
             \(contractName)Status
             """
@@ -231,7 +219,7 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
         }
         """
         
-        if storageType != "Void" {
+        if contract.storage.type != .unit {
             contents += """
             
             
@@ -248,11 +236,11 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
                 /// \(contractName)'s current operation counter
                 let counter: Int
                 /// \(contractName)'s storage
-                let storage:
+                let storage: 
             """
-            if isSimple {
+            if contract.storage.isSimple {
                 contents += """
-                \(storageType)
+                \(contract.storage.generatedSwiftTypeString)
                 """
             } else {
                 contents += """
@@ -272,27 +260,28 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
 
                     let scriptContainer = try container.nestedContainer(keyedBy: ContractStatusKeys.self, forKey: .script)
             """
-            if isSimple {
-                if key == "set" || key == "list" {
+            if contract.storage.isSimple {
+                switch contract.storage.type {
+                case .set, .list:
                     contents += """
                     
-                            self.storage = try scriptContainer.decodeRPC(\(storageType).self, forKey: .storage)
+                            self.storage = try scriptContainer.decodeRPC(\(contract.storage.generatedSwiftTypeString).self, forKey: .storage)
                     """
-                } else if key == "map" || key == "big_map" {
+                case .map, .bigMap:
                     contents += """
                     
-                            self.storage = try scriptContainer.decode(\(storageInternalType).self, forKey: .storage).pairs.reduce([:], { var mutable = $0; mutable[$1.first] = $1.second; return mutable })
+                            self.storage = try scriptContainer.decode(\(contract.storage.generatedTypeString).self, forKey: .storage).pairs.reduce([:], { var mutable = $0; mutable[$1.first] = $1.second; return mutable })
                     """
-                } else {
+                default:
                     contents += """
                     
-                            self.storage = try scriptContainer.nestedContainer(keyedBy: StorageKeys.self, forKey: .storage).decodeRPC(\(storageType).self)
+                            self.storage = try scriptContainer.nestedContainer(keyedBy: StorageKeys.self, forKey: .storage).decodeRPC(\(contract.storage.generatedSwiftTypeString).self)
                     """
                 }
-            } else if key == nil {
+            } else if contract.storage.key == nil {
                 contents += """
                 
-                        self.storage = try scriptContainer.nestedContainer(keyedBy: StorageKeys.self, forKey: .storage).decodeRPC(\(storageType).self)
+                        self.storage = try scriptContainer.nestedContainer(keyedBy: StorageKeys.self, forKey: .storage).decodeRPC(\(contract.storage.generatedSwiftTypeString).self)
                 """
             } else {
                 contents += """
@@ -306,7 +295,10 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
             }
             """
             
-            if !isSimple {
+            let arguments = contract.storage.renderToSwift().enumerated().map { "let " + ($1.1 ?? "arg\($0 + 1)") + ": \($1.0)"}.joined(separator: "\n\t")
+            let contractInitArguments = contract.storage.renderArgsToSwift().joined(separator: "\n\t\t")
+            
+            if !contract.storage.isSimple {
                 contents += """
                 
                 /**
@@ -318,7 +310,7 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
                     \(arguments)
 
                     public init(from decoder: Decoder) throws {
-                        let tezosElement = try decoder.singleValueContainer().decode(\(storageType).self)
+                        let tezosElement = try decoder.singleValueContainer().decode(\(contract.storage.generatedSwiftTypeString).self)
 
                         \(contractInitArguments)
                     }
