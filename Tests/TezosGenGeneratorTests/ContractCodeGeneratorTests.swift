@@ -121,27 +121,11 @@ final class ContractCodeGeneratorTests: TezosGenUnitTestCase {
 
         /// Status data of HelloContract
         struct HelloContractStatus: Decodable {
-            /// Balance of HelloContract in Tezos
-            let balance: Tez
-            /// Is contract spendable
-            let spendable: Bool
-            /// HelloContract's manager address
-            let manager: String
-            /// HelloContract's delegate
-            let delegate: StatusDelegate
-            /// HelloContract's current operation counter
-            let counter: Int
             /// HelloContract's storage
             let storage: [UInt]
 
             init(from decoder: Decoder) throws {
                 let container = try decoder.container(keyedBy: ContractStatusKeys.self)
-                self.balance = try container.decode(Tez.self, forKey: .balance)
-                self.spendable = try container.decode(Bool.self, forKey: .spendable)
-                self.manager = try container.decode(String.self, forKey: .manager)
-                self.delegate = try container.decode(StatusDelegate.self, forKey: .delegate)
-                self.counter = try container.decodeRPC(Int.self, forKey: .counter)
-
                 let scriptContainer = try container.nestedContainer(keyedBy: ContractStatusKeys.self, forKey: .script)
                 self.storage = try scriptContainer.decodeRPC([UInt].self, forKey: .storage)
             }

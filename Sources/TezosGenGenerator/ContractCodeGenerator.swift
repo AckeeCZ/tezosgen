@@ -244,16 +244,6 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
             
             /// Status data of \(contractName)
             struct \(contractName)Status: Decodable {
-                /// Balance of \(contractName) in Tezos
-                let balance: Tez
-                /// Is contract spendable
-                let spendable: Bool
-                /// \(contractName)'s manager address
-                let manager: String
-                /// \(contractName)'s delegate
-                let delegate: StatusDelegate
-                /// \(contractName)'s current operation counter
-                let counter: Int
                 /// \(contractName)'s storage
                 let storage: 
             """
@@ -271,12 +261,6 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
             
                 init(from decoder: Decoder) throws {
                     let container = try decoder.container(keyedBy: ContractStatusKeys.self)
-                    self.balance = try container.decode(Tez.self, forKey: .balance)
-                    self.spendable = try container.decode(Bool.self, forKey: .spendable)
-                    self.manager = try container.decode(String.self, forKey: .manager)
-                    self.delegate = try container.decode(StatusDelegate.self, forKey: .delegate)
-                    self.counter = try container.decodeRPC(Int.self, forKey: .counter)
-
                     let scriptContainer = try container.nestedContainer(keyedBy: ContractStatusKeys.self, forKey: .script)
             """
             if contract.storage.isSimple {
