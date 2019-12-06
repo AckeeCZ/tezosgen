@@ -14,11 +14,6 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
     public init() { }
     
     public func generateContract(path: AbsolutePath, contract: Contract, contractName: String) throws {
-        // TODO:
-//        let container = try decoder.container(keyedBy: StorageKeys.self)
-//        var nestedContainer = try container.nestedUnkeyedContainer(forKey: .args)
-//        let tezosElement = try nestedContainer.decode(TezosPair<Bool, Bool>?.self)
-        
         if !FileHandler.shared.exists(path) {
             try FileHandler.shared.createFolder(path)
         }
@@ -310,8 +305,23 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
                     \(arguments)
 
                     public init(from decoder: Decoder) throws {
-                        let tezosElement = try decoder.singleValueContainer().decode(\(contract.storage.generatedSwiftTypeString).self)
-
+                """
+                
+                switch contract.storage.type {
+                case .option:
+                    contents += """
+                            
+                            let container = try decoder.container(keyedBy: StorageKeys.self)
+                            var nestedContainer = try? container.nestedUnkeyedContainer(forKey: .args)
+                            let tezosElement = try nestedContainer?.decode(\(contract.storage.generatedSwiftTypeString).self)
+                    """
+                default:
+                    contents += """
+                            let tezosElement = try decoder.singleValueContainer().decode(\(contract.storage.generatedSwiftTypeString).self)
+                    """
+                }
+                contents += """
+                
                         \(contractInitArguments)
                     }
                 }
