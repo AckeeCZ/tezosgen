@@ -123,8 +123,9 @@ final class GenerateCommand: NSObject, Command {
         let generatedSwiftCodePath: AbsolutePath = self.generatedSwiftCodePath(outputValue: arguments.get(outputArgument),
                                                                                xcodePath: arguments.get(xcodeArgument))
 
-        try contractCodeGenerator.generateContract(path: generatedSwiftCodePath, contract: contract, contractName: contractName)
-        try contractCodeGenerator.generateSharedContract(path: generatedSwiftCodePath, extensions: arguments.get(extensionsArgument) ?? [])
+        let extensions = arguments.get(extensionsArgument) ?? []
+        try contractCodeGenerator.generateContract(path: generatedSwiftCodePath, contract: contract, contractName: contractName, extensions: extensions)
+        try contractCodeGenerator.generateSharedContract(path: generatedSwiftCodePath, extensions: extensions)
         
         // Do not bind files when project or swift code path is not given
         guard

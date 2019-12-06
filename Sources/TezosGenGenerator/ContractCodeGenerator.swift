@@ -3,6 +3,7 @@ import TezosGenCore
 import class TuistSupport.FileHandler
 
 public protocol ContractCodeGenerating {
+    func generateContract(path: AbsolutePath, contract: Contract, contractName: String, extensions: [GeneratorExtension]) throws
     func generateContract(path: AbsolutePath, contract: Contract, contractName: String) throws
     func generateSharedContract(path: AbsolutePath, extensions: [GeneratorExtension]) throws
     func generateSharedContract(path: AbsolutePath) throws
@@ -14,13 +15,18 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
     public init() { }
     
     public func generateContract(path: AbsolutePath, contract: Contract, contractName: String) throws {
+        try generateContract(path: path, contract: contract, contractName: contractName, extensions: [])
+    }
+    
+    public func generateContract(path: AbsolutePath, contract: Contract, contractName: String, extensions: [GeneratorExtension]) throws {
         if !FileHandler.shared.exists(path) {
             try FileHandler.shared.createFolder(path)
         }
         
-        try generateContract(path: path,
-                             contractName: contractName,
-                             contract: contract)
+        try generateContractCode(path: path,
+                                 contractName: contractName,
+                                 contract: contract,
+                                 extensions: extensions)
     }
     
     public func generateSharedContract(path: AbsolutePath) throws {
@@ -151,9 +157,10 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
     }
     
     // swiftlint:disable:next function_body_length
-    private func generateContract(path: AbsolutePath,
+    private func generateContractCode(path: AbsolutePath,
                                   contractName: String,
-                                  contract: Contract) throws {
+                                  contract: Contract,
+                                  extensions: [GeneratorExtension]) throws {
         var contents = """
         // Generated using TezosGen
         // swiftlint:disable file_length
@@ -196,21 +203,38 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
             func status(completion: @escaping RPCCompletion<
         """
         
+        let contractStatusType: String
         if contract.storage.type != .unit {
-            contents += """
-            \(contractName)Status
-            """
+            contractStatusType = "\(contractName)Status"
         } else {
-            contents += """
-            ContractStatus
-            """
+            contractStatusType = "ContractStatus"
         }
+        
+        contents += contractStatusType
         
         contents += """
         >) -> Cancelable? {
                 let endpoint = "/chains/main/blocks/head/context/contracts/" + at
                 return tezosClient.sendRPC(endpoint: endpoint, method: .get, completion: completion)
             }
+        """
+        
+        extensions.forEach {
+            switch $0 {
+            case .combine:
+                contents += """
+                
+                
+                    /// Call this method to obtain contract status data
+                    func statusPublisher() -> ContractPublisher<\(contractStatusType)> {
+                        ContractPublisher(send: { self.status(completion: $0) })
+                    }
+                """
+            }
+        }
+        
+        contents += """
+        
         }
         """
         
@@ -317,6 +341,7 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
                     """
                 default:
                     contents += """
+                    
                             let tezosElement = try decoder.singleValueContainer().decode(\(contract.storage.generatedSwiftTypeString).self)
                     """
                 }
