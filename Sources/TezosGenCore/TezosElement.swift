@@ -100,7 +100,8 @@ extension TezosElement {
         switch type {
         case .map, .bigMap:
             guard let first = args.first, let second = args.last else { return "" }
-            return "[\(first.generatedTypeString): \(second.generatedTypeString)]"
+            let valueType = second.isSimple ? second.generatedTypeString : name?.capitalized ?? ""
+            return "[\(first.generatedTypeString): \(valueType)]"
         default:
             return generatedTypeString
         }
@@ -141,8 +142,10 @@ extension TezosElement {
 
     private func renderPairElementToSwift(index: inout Int, renderedElements: inout [(String, String?)], optional: Bool) {
         switch type {
-        case .pair: renderElementToSwift(index: &index, renderedElements: &renderedElements, optional: optional)
-        case .option: args.first?.renderElementToSwift(index: &index, renderedElements: &renderedElements, optional: true)
+        case .pair:
+            renderElementToSwift(index: &index, renderedElements: &renderedElements, optional: optional)
+        case .option:
+            args.first?.renderElementToSwift(index: &index, renderedElements: &renderedElements, optional: true)
         default:
             index += 1
             renderedElements.append(renderSimpleToSwift(index: index, optional: optional))
