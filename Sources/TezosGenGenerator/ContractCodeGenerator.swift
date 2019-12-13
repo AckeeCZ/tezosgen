@@ -158,9 +158,9 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
     
     // swiftlint:disable:next function_body_length
     private func generateContractCode(path: AbsolutePath,
-                                  contractName: String,
-                                  contract: Contract,
-                                  extensions: [GeneratorExtension]) throws {
+                                      contractName: String,
+                                      contract: Contract,
+                                      extensions: [GeneratorExtension]) throws {
         var contents = """
         // Generated using TezosGen
         // swiftlint:disable file_length
@@ -299,7 +299,8 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
             """
             
             let arguments = contract.storage.renderToSwift().enumerated().map { "let " + ($1.1 ?? "arg\($0 + 1)") + ": \($1.0)"}.joined(separator: "\n\t")
-            let contractInitArguments = contract.storage.renderArgsToSwift().joined(separator: "\n\t\t")
+            let (contractInitArgumentsArray, helpers) = contract.storage.renderArgsToSwift()
+            let contractInitArguments = contractInitArgumentsArray.joined(separator: "\n\t\t")
             
             if !contract.storage.isSimple {
                 contents += """
@@ -335,6 +336,8 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
                     }
                 }
                 """
+                
+                contents += generateHelpers(helpers: helpers)
             }
         }
         
@@ -357,5 +360,31 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
         
         let contractPath = path.appending(component: contractName + ".swift")
         try FileHandler.shared.write(contents, path: contractPath, atomically: true)
+    }
+    
+    private func generateHelpers(helpers: [TezosElement]) -> String {
+        var helpers = helpers
+        var contents: String = ""
+        helpers.enumerated().forEach { index, helper in
+            let helperName = helper.name ?? "Arg\(index)"
+            let arguments = helper.renderToSwift().enumerated().map { "let " + ($1.1 ?? "arg\($0 + 1)") + ": \($1.0)"}.joined(separator: "\n\t")
+            let helperInitArgumentsArray: [String]
+            (helperInitArgumentsArray, helpers) = helper.renderArgsToSwift()
+            let helperInitArguments = helperInitArgumentsArray.joined(separator: "\n\t\t")
+            
+            contents += """
+            
+            
+            struct \(helperName.capitalized) {
+                \(arguments)
+                
+                init(_ tezosElement: \(helper.generatedTypeString)) {
+                    \(helperInitArguments)
+                }
+            }
+            """
+        }
+        
+        return contents
     }
 }
