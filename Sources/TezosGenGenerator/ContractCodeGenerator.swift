@@ -128,12 +128,18 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
                     }
             """
         }
+        let operationNameParameter: String
+        if let operationName = contractCall.name {
+            operationNameParameter = ", operationName: \"\(operationName)\""
+        } else {
+            operationNameParameter = ""
+        }
         if contractParams.isEmpty {
             contents +=
             """
             
                     send = { from, amount, operationFees, completion in
-                        self.tezosClient.send(amount: amount, to: self.at, from: from, operationFees: operationFees, completion: completion)
+                        self.tezosClient.send(amount: amount, to: self.at, from: from, input: nil as Never?\(operationNameParameter), operationFees: operationFees, completion: completion)
                     }
 
                     return ContractMethodInvocation(send: send)
@@ -145,7 +151,7 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
             
                     let input: \(parameterType) = \(contractInit.0)
                     send = { from, amount, operationFees, completion in
-                        self.tezosClient.send(amount: amount, to: self.at, from: from, input: input, operationFees: operationFees, completion: completion)
+                        self.tezosClient.send(amount: amount, to: self.at, from: from, input: input\(operationNameParameter), operationFees: operationFees, completion: completion)
                     }
 
                     return ContractMethodInvocation(send: send)
