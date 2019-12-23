@@ -47,7 +47,7 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
                 return content + """
                 
                     
-                    func sendPublisher(from: Wallet, amount: TezToken, operationFees: OperationFees? = nil) -> ContractPublisher<String> {
+                    func callPublisher(from: Wallet, amount: TezToken, operationFees: OperationFees? = nil) -> ContractPublisher<String> {
                         ContractPublisher(send: { self.send(from, amount, operationFees, $0) })
                     }
                 """
@@ -139,7 +139,7 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
             """
             
                     send = { from, amount, operationFees, completion in
-                        self.tezosClient.send(amount: amount, to: self.at, from: from, input: nil as Never?\(operationNameParameter), operationFees: operationFees, completion: completion)
+                        self.tezosClient.call(amount: amount, to: self.at, from: from\(operationNameParameter), operationFees: operationFees, completion: completion)
                     }
 
                     return ContractMethodInvocation(send: send)
@@ -151,7 +151,7 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
             
                     let input: \(parameterType) = \(contractInit.0)
                     send = { from, amount, operationFees, completion in
-                        self.tezosClient.send(amount: amount, to: self.at, from: from, input: input\(operationNameParameter), operationFees: operationFees, completion: completion)
+                        self.tezosClient.call(amount: amount, to: self.at, from: from, input: input\(operationNameParameter), operationFees: operationFees, completion: completion)
                     }
 
                     return ContractMethodInvocation(send: send)
@@ -195,7 +195,7 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
             """
                 func call() -> ContractMethodInvocation {
                     let send: (_ from: Wallet, _ amount: TezToken, _ operationFees: OperationFees?, _ completion: @escaping RPCCompletion<String>) -> Cancelable? = { from, amount, operationFees, completion in
-                        self.tezosClient.send(amount: amount, to: self.at, from: from, operationFees: operationFees, completion: completion)
+                        self.tezosClient.call(amount: amount, to: self.at, from: from, operationFees: operationFees, completion: completion)
                     }
                 }
             """
