@@ -109,4 +109,39 @@ public extension TezosGenUnitTestCase {
             XCTFail("The code threw the following error: \(error)", file: file, line: line)
         }
     }
+    
+    /// Custom String `XCTAssert` for better multiline checker
+    /// Taken from : https://vojtastavik.com/2019/11/28/custom-multiline-assertion/
+    func XCTAssertMultilineEqual(
+      _ text: String,
+      multiline reference: String,
+      file: StaticString = #file,
+      line: UInt = #line
+    ) {
+      let textLines = text.split(separator: "\n", omittingEmptySubsequences: false)
+      let referenceLines = reference.split(separator: "\n", omittingEmptySubsequences: false)
+      
+      for idx in 0..<max(textLines.count, referenceLines.count) {
+        let left = textLines[safely: idx]
+        let right = referenceLines[safely: idx]
+        
+        let line = line + UInt(1 + idx)
+        
+        if let left = left, let right = right {
+          XCTAssertEqual(left, right, file: file, line: line)
+        } else {
+          XCTAssertEqual(left, right, file: file, line: line)
+        }
+      }
+    }
+}
+
+private extension Array {
+    subscript(safely index: Index) -> Element? {
+        if self.indices.contains(index) {
+            return self[index]
+        } else {
+            return nil
+        }
+    }
 }

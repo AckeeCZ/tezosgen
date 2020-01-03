@@ -3,6 +3,7 @@ import TezosGenCore
 import class TuistSupport.FileHandler
 
 public protocol ContractCodeGenerating {
+    func generateContract(path: AbsolutePath, contract: Contract, contractName: String, extensions: [GeneratorExtension]) throws
     func generateContract(path: AbsolutePath, contract: Contract, contractName: String) throws
     func generateSharedContract(path: AbsolutePath, extensions: [GeneratorExtension]) throws
     func generateSharedContract(path: AbsolutePath) throws
@@ -14,36 +15,18 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
     public init() { }
     
     public func generateContract(path: AbsolutePath, contract: Contract, contractName: String) throws {
-        let params = contract.parameter.renderToSwift().enumerated().map { ($1.1 ?? "param\($0 + 1)") + ": \($1.0)" }.joined(separator: ", ")
-        let args = contract.storage.renderToSwift().enumerated().map { ($1.1 ?? "let arg\($0 + 1)") + ": \($1.0)"}.joined(separator: "\n\t")
-        let renderedInit = contract.parameter.renderInitToSwift()
-        let initArgs = contract.storage.renderArgsToSwift().joined(separator: "\n\t\t")
-        
-        let key: String? = contract.storage.key
-
-        let checks: String?
-        if !renderedInit.1.isEmpty {
-            checks = renderedInit.1.enumerated().map { "let tezosOr\($0 + 1) = \($1)" }.joined(separator: ", ")
-        } else {
-            checks = nil
-        }
-        
+        try generateContract(path: path, contract: contract, contractName: contractName, extensions: [])
+    }
+    
+    public func generateContract(path: AbsolutePath, contract: Contract, contractName: String, extensions: [GeneratorExtension]) throws {
         if !FileHandler.shared.exists(path) {
             try FileHandler.shared.createFolder(path)
         }
         
-        try generateContract(path: path,
-                             contractName: contractName,
-                             arguments: args,
-                             storageType: contract.storage.generatedSwiftTypeString,
-                             storageInternalType: contract.storage.generatedTypeString,
-                             paramaterType: contract.parameter.generatedTypeString,
-                             contractParams: params,
-                             checks: checks,
-                             contractInit: renderedInit.0,
-                             contractInitArguments: initArgs,
-                             isSimple: contract.storage.isSimple,
-                             key: key)
+        try generateContractCode(path: path,
+                                 contractName: contractName,
+                                 contract: contract,
+                                 extensions: extensions)
     }
     
     public func generateSharedContract(path: AbsolutePath) throws {
@@ -62,9 +45,9 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
             switch currentExtension {
             case .combine:
                 return content + """
+                
                     
-                    
-                    func sendPublisher(from: Wallet, amount: TezToken, operationFees: OperationFees? = nil) -> ContractPublisher {
+                    func callPublisher(from: Wallet, amount: TezToken, operationFees: OperationFees? = nil) -> ContractPublisher<String> {
                         ContractPublisher(send: { self.send(from, amount, operationFees, $0) })
                     }
                 """
@@ -82,6 +65,7 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
                 self.send = send
             }
 
+            @discardableResult
             func send(from: Wallet, amount: TezToken, operationFees: OperationFees? = nil, completion: @escaping RPCCompletion<String>) -> Cancelable? {
                 self.send(from, amount, operationFees, completion)
             }\(additionalFunctionContents)
@@ -95,19 +79,94 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
     
     // MARK: - Helpers
     
+    private func generateContractCall(contractName: String,
+                                      contractCall: ContractCall) -> String {
+        
+        let contractParams = contractCall.parameter.renderToSwift()
+            .filter { $0.0 != "Never?" }
+            .enumerated()
+            .map {
+                ($1.1 ?? "param\($0 + 1)") + ": \($1.0)"
+            }
+        let contractParamsString: String
+        if contractParams.count == 1 {
+            contractParamsString = "_ " + contractParams.joined(separator: ", ")
+        } else {
+            contractParamsString = contractParams.joined(separator: ", ")
+        }
+        let contractInit = contractCall.parameter.renderInitToSwift()
+        let parameterType = contractCall.parameter.generatedTypeString
+
+        let checks: String?
+        if !contractInit.1.isEmpty {
+            checks = contractInit.1.enumerated().map { "let tezosOr\($0 + 1) = \($1)" }.joined(separator: ", ")
+        } else {
+            checks = nil
+        }
+        
+        var contents =
+        """
+        
+            /**
+             Call \(contractName) with specified params.
+             **Important:**
+             Params are in the order of how they are specified in the Tezos structure tree
+            */
+            func \(contractCall.name ?? "call")(\(contractParamsString)) -> ContractMethodInvocation {
+                let send: (_ from: Wallet, _ amount: TezToken, _ operationFees: OperationFees?, _ completion: @escaping RPCCompletion<String>) -> Cancelable?
+        """
+        if let checks = checks {
+            contents +=
+            """
+                
+                    guard \(checks) else {
+                        send = { from, amount, operationFees, completion in
+                            completion(.failure(.parameterError(reason: .orError)))
+                            return AnyCancelable { }
+                        }
+                        return ContractMethodInvocation(send: send)
+                    }
+            """
+        }
+        let operationNameParameter: String
+        if let operationName = contractCall.name {
+            operationNameParameter = ", operationName: \"\(operationName)\""
+        } else {
+            operationNameParameter = ""
+        }
+        if contractParams.isEmpty {
+            contents +=
+            """
+            
+                    send = { from, amount, operationFees, completion in
+                        self.tezosClient.call(amount: amount, to: self.at, from: from\(operationNameParameter), operationFees: operationFees, completion: completion)
+                    }
+
+                    return ContractMethodInvocation(send: send)
+                }
+            """
+        } else {
+            contents +=
+            """
+            
+                    let input: \(parameterType) = \(contractInit.0)
+                    send = { from, amount, operationFees, completion in
+                        self.tezosClient.call(amount: amount, to: self.at, from: from, input: input\(operationNameParameter), operationFees: operationFees, completion: completion)
+                    }
+
+                    return ContractMethodInvocation(send: send)
+                }
+            """
+        }
+        
+        return contents
+    }
+    
     // swiftlint:disable:next function_body_length
-    private func generateContract(path: AbsolutePath,
-                                  contractName: String,
-                                  arguments: String,
-                                  storageType: String,
-                                  storageInternalType: String,
-                                  paramaterType: String?,
-                                  contractParams: String,
-                                  checks: String?,
-                                  contractInit: String,
-                                  contractInitArguments: String,
-                                  isSimple: Bool,
-                                  key: String?) throws {
+    private func generateContractCode(path: AbsolutePath,
+                                      contractName: String,
+                                      contract: Contract,
+                                      extensions: [GeneratorExtension]) throws {
         var contents = """
         // Generated using TezosGen
         // swiftlint:disable file_length
@@ -125,47 +184,18 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
                self.at = at
             }
         """
-        if let paramaterType = paramaterType {
-            contents +=
-            """
-            
-                
-                /**
-                 Call \(contractName) with specified params.
-                 **Important:**
-                 Params are in the order of how they are specified in the Tezos structure tree
-                */
-                func call(\(contractParams)) -> ContractMethodInvocation {
-                    let send: (_ from: Wallet, _ amount: TezToken, _ operationFees: OperationFees?, _ completion: @escaping RPCCompletion<String>) -> Cancelable?
-            """
-            if let checks = checks {
-                contents +=
-                """
-                    guard \(checks) else {
-                        send = { from, amount, operationFees, completion in
-                            completion(.failure(.parameterError(reason: .orError)))
-                        }
-                        return ContractMethodInvocation(send: send)
-                    }
-                """
-            }
-            contents +=
-            """
-                
-                    let input: \(paramaterType) = \(contractInit)
-                    send = { from, amount, operationFees, completion in
-                        self.tezosClient.send(amount: amount, to: self.at, from: from, input: input, operationFees: operationFees, completion: completion)
-                    }
-
-                    return ContractMethodInvocation(send: send)
-                }
-            """
+        if !contract.calls.isEmpty {
+            contents += contract.calls
+                .map {
+                    generateContractCall(contractName: contractName,
+                                        contractCall: $0)
+                }.joined(separator: "\n")
         } else {
             contents +=
             """
                 func call() -> ContractMethodInvocation {
                     let send: (_ from: Wallet, _ amount: TezToken, _ operationFees: OperationFees?, _ completion: @escaping RPCCompletion<String>) -> Cancelable? = { from, amount, operationFees, completion in
-                        self.tezosClient.send(amount: amount, to: self.at, from: from, operationFees: operationFees, completion: completion)
+                        self.tezosClient.call(amount: amount, to: self.at, from: from, operationFees: operationFees, completion: completion)
                     }
                 }
             """
@@ -179,46 +209,53 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
             func status(completion: @escaping RPCCompletion<
         """
         
-        if storageType != "Void" {
-            contents += """
-            \(contractName)Status
-            """
+        let contractStatusType: String
+        if contract.storage.type != .unit {
+            contractStatusType = "\(contractName)Status"
         } else {
-            contents += """
-            ContractStatus
-            """
+            contractStatusType = "ContractStatus"
         }
+        
+        contents += contractStatusType
         
         contents += """
         >) -> Cancelable? {
                 let endpoint = "/chains/main/blocks/head/context/contracts/" + at
                 return tezosClient.sendRPC(endpoint: endpoint, method: .get, completion: completion)
             }
+        """
+        
+        extensions.forEach {
+            switch $0 {
+            case .combine:
+                contents += """
+                
+                
+                    /// Call this method to obtain contract status data
+                    func statusPublisher() -> ContractPublisher<\(contractStatusType)> {
+                        ContractPublisher(send: { self.status(completion: $0) })
+                    }
+                """
+            }
+        }
+        
+        contents += """
+        
         }
         """
         
-        if storageType != "Void" {
+        if contract.storage.type != .unit {
             contents += """
             
             
             /// Status data of \(contractName)
             struct \(contractName)Status: Decodable {
-                /// Balance of \(contractName) in Tezos
-                let balance: Tez
-                /// Is contract spendable
-                let spendable: Bool
-                /// \(contractName)'s manager address
-                let manager: String
-                /// \(contractName)'s delegate
-                let delegate: StatusDelegate
-                /// \(contractName)'s current operation counter
-                let counter: Int
                 /// \(contractName)'s storage
-                let storage:
+                let storage: 
             """
-            if isSimple {
+            if contract.storage.isSimple {
                 contents += """
-                \(storageType)
+                \(contract.storage.generatedSwiftTypeString)
                 """
             } else {
                 contents += """
@@ -230,35 +267,30 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
             
                 init(from decoder: Decoder) throws {
                     let container = try decoder.container(keyedBy: ContractStatusKeys.self)
-                    self.balance = try container.decode(Tez.self, forKey: .balance)
-                    self.spendable = try container.decode(Bool.self, forKey: .spendable)
-                    self.manager = try container.decode(String.self, forKey: .manager)
-                    self.delegate = try container.decode(StatusDelegate.self, forKey: .delegate)
-                    self.counter = try container.decodeRPC(Int.self, forKey: .counter)
-
                     let scriptContainer = try container.nestedContainer(keyedBy: ContractStatusKeys.self, forKey: .script)
             """
-            if isSimple {
-                if key == "set" || key == "list" {
+            if contract.storage.isSimple {
+                switch contract.storage.type {
+                case .set, .list:
                     contents += """
                     
-                            self.storage = try scriptContainer.decodeRPC(\(storageType).self, forKey: .storage)
+                            self.storage = try scriptContainer.decodeRPC(\(contract.storage.generatedSwiftTypeString).self, forKey: .storage)
                     """
-                } else if key == "map" || key == "big_map" {
+                case .map, .bigMap:
                     contents += """
                     
-                            self.storage = try scriptContainer.decode(\(storageInternalType).self, forKey: .storage).pairs.map { ($0.first, $0.second) }
+                            self.storage = try scriptContainer.decode(\(contract.storage.generatedTypeString).self, forKey: .storage).pairs.reduce([:], { var mutable = $0; mutable[$1.first] = $1.second; return mutable })
                     """
-                } else {
+                default:
                     contents += """
                     
-                            self.storage = try scriptContainer.nestedContainer(keyedBy: StorageKeys.self, forKey: .storage).decodeRPC(\(storageType)).self)
+                            self.storage = try scriptContainer.nestedContainer(keyedBy: StorageKeys.self, forKey: .storage).decodeRPC(\(contract.storage.generatedSwiftTypeString).self)
                     """
                 }
-            } else if key == nil {
+            } else if contract.storage.key == nil {
                 contents += """
                 
-                        self.storage = try scriptContainer.nestedContainer(keyedBy: StorageKeys.self, forKey: .storage).decodeRPC(\(storageType).self)
+                        self.storage = try scriptContainer.nestedContainer(keyedBy: StorageKeys.self, forKey: .storage).decodeRPC(\(contract.storage.generatedSwiftTypeString).self)
                 """
             } else {
                 contents += """
@@ -272,7 +304,11 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
             }
             """
             
-            if !isSimple {
+            let arguments = contract.storage.renderToSwift().enumerated().map { "let " + ($1.1 ?? "arg\($0 + 1)") + ": \($1.0)"}.joined(separator: "\n\t")
+            let (contractInitArgumentsArray, helpers) = contract.storage.renderArgsToSwift()
+            let contractInitArguments = contractInitArgumentsArray.joined(separator: "\n\t\t")
+            
+            if !contract.storage.isSimple {
                 contents += """
                 
                 /**
@@ -284,12 +320,30 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
                     \(arguments)
 
                     public init(from decoder: Decoder) throws {
-                        let tezosElement = try decoder.singleValueContainer().decode(\(storageType).self)
-
+                """
+                
+                switch contract.storage.type {
+                case .option:
+                    contents += """
+                            
+                            let container = try decoder.container(keyedBy: StorageKeys.self)
+                            var nestedContainer = try? container.nestedUnkeyedContainer(forKey: .args)
+                            let tezosElement = try nestedContainer?.decode(\(contract.storage.generatedSwiftTypeString).self)
+                    """
+                default:
+                    contents += """
+                    
+                            let tezosElement = try decoder.singleValueContainer().decode(\(contract.storage.generatedSwiftTypeString).self)
+                    """
+                }
+                contents += """
+                
                         \(contractInitArguments)
                     }
                 }
                 """
+                
+                contents += generateHelpers(helpers: helpers)
             }
         }
         
@@ -312,5 +366,31 @@ public final class ContractCodeGenerator: ContractCodeGenerating {
         
         let contractPath = path.appending(component: contractName + ".swift")
         try FileHandler.shared.write(contents, path: contractPath, atomically: true)
+    }
+    
+    private func generateHelpers(helpers: [TezosElement]) -> String {
+        var helpers = helpers
+        var contents: String = ""
+        helpers.enumerated().forEach { index, helper in
+            let helperName = helper.name ?? "Arg\(index)"
+            let arguments = helper.renderToSwift().enumerated().map { "let " + ($1.1 ?? "arg\($0 + 1)") + ": \($1.0)"}.joined(separator: "\n\t")
+            let helperInitArgumentsArray: [String]
+            (helperInitArgumentsArray, helpers) = helper.renderArgsToSwift()
+            let helperInitArguments = helperInitArgumentsArray.joined(separator: "\n\t\t")
+            
+            contents += """
+            
+            
+            struct \(helperName.capitalized) {
+                \(arguments)
+                
+                init(_ tezosElement: \(helper.generatedTypeString)) {
+                    \(helperInitArguments)
+                }
+            }
+            """
+        }
+        
+        return contents
     }
 }

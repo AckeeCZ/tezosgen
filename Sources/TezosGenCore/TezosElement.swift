@@ -1,5 +1,5 @@
 public class TezosElement: Decodable {
-    public let name: String?
+    public var name: String?
     public let type: TezosPrimaryType
     public let args: [TezosElement]
 
@@ -43,7 +43,7 @@ extension TezosElement {
     public var generatedTypeString: String {
         switch type {
         case .unit:
-            return "Void"
+            return "Never?"
         case .string:
             return "String"
         case .int:
@@ -100,7 +100,8 @@ extension TezosElement {
         switch type {
         case .map, .bigMap:
             guard let first = args.first, let second = args.last else { return "" }
-            return "[(\(first.generatedTypeString), \(second.generatedTypeString))]"
+            let valueType = second.isSimple ? second.generatedTypeString : name?.capitalized ?? ""
+            return "[\(first.generatedTypeString): \(valueType)]"
         default:
             return generatedTypeString
         }
@@ -141,8 +142,10 @@ extension TezosElement {
 
     private func renderPairElementToSwift(index: inout Int, renderedElements: inout [(String, String?)], optional: Bool) {
         switch type {
-        case .pair: renderElementToSwift(index: &index, renderedElements: &renderedElements, optional: optional)
-        case .option: args.first?.renderElementToSwift(index: &index, renderedElements: &renderedElements, optional: true)
+        case .pair:
+            renderElementToSwift(index: &index, renderedElements: &renderedElements, optional: optional)
+        case .option:
+            args.first?.renderElementToSwift(index: &index, renderedElements: &renderedElements, optional: true)
         default:
             index += 1
             renderedElements.append(renderSimpleToSwift(index: index, optional: optional))
@@ -178,20 +181,30 @@ extension TezosElement {
         return renderedElements
     }
 
-    private func renderSimpleInitToSwift(index: Int, suffix: String) -> String {
-        var paramName: String = name ?? "param\(index)"
-        if type == .set {
-            paramName += ".sorted()"
+    private func renderSimpleInitToSwift(index: inout Int, suffix: String) -> String {
+        switch type {
+        case .unit:
+            return "nil" + suffix
+        case .map:
+            index += 1
+            let paramName: String = name ?? "param\(index)"
+            return "TezosMap(pairs: \(paramName).map { TezosPair(first: $0.0, second: $0.1) })" + suffix
+        default:
+            index += 1
+            var paramName: String = name ?? "param\(index)"
+            if type == .set {
+                paramName += ".sorted()"
+            }
+            return paramName + suffix
         }
-        return paramName + suffix
     }
 
     private func renderInitPairElementToSwift(index: inout Int, renderedInit: inout String, orChecks: inout [String], suffix: String) {
         switch type {
-        case .pair, .or: renderInitElementToSwift(index: &index, renderedInit: &renderedInit, orChecks: &orChecks)
+        case .pair, .or:
+            renderInitElementToSwift(index: &index, renderedInit: &renderedInit, orChecks: &orChecks)
         default:
-            index += 1
-            renderedInit += renderSimpleInitToSwift(index: index, suffix: suffix)
+            renderedInit += renderSimpleInitToSwift(index: &index, suffix: suffix)
         }
     }
 
@@ -222,8 +235,7 @@ extension TezosElement {
             }
             args.first?.renderInitElementToSwift(index: &index, renderedInit: &renderedInit, orChecks: &orChecks)
         default:
-            index += 1
-            renderedInit += renderSimpleInitToSwift(index: index, suffix: "")
+            renderedInit += renderSimpleInitToSwift(index: &index, suffix: "")
         }
     }
 
@@ -235,22 +247,22 @@ extension TezosElement {
         return (renderedInit, orChecks)
     }
 
-    private func renderArgInitElementToSwift(index: inout Int, currentlyRendered: String, args: inout [String]) {
+    private func renderArgInitElementToSwift(index: inout Int, currentlyRendered: String, args: inout [String], helpers: inout [TezosElement]) {
         switch type {
         case .pair:
-            self.args.first?.renderArgInitElementToSwift(index: &index, currentlyRendered: currentlyRendered + ".first", args: &args)
-            self.args.last?.renderArgInitElementToSwift(index: &index, currentlyRendered: currentlyRendered + ".second", args: &args)
+            self.args.first?.renderArgInitElementToSwift(index: &index, currentlyRendered: currentlyRendered + ".first", args: &args, helpers: &helpers)
+            self.args.last?.renderArgInitElementToSwift(index: &index, currentlyRendered: currentlyRendered + ".second", args: &args, helpers: &helpers)
         case .or:
-            self.args.first?.renderArgInitElementToSwift(index: &index, currentlyRendered: currentlyRendered + ".left", args: &args)
-            self.args.last?.renderArgInitElementToSwift(index: &index, currentlyRendered: currentlyRendered + ".right", args: &args)
+            self.args.first?.renderArgInitElementToSwift(index: &index, currentlyRendered: currentlyRendered + ".left", args: &args, helpers: &helpers)
+            self.args.last?.renderArgInitElementToSwift(index: &index, currentlyRendered: currentlyRendered + ".right", args: &args, helpers: &helpers)
         case .option:
             let arg = self.args.first
             if arg?.type == .pair {
-                arg?.args.first?.renderArgInitElementToSwift(index: &index, currentlyRendered: currentlyRendered + "?" + ".first", args: &args)
-                arg?.args.last?.renderArgInitElementToSwift(index: &index, currentlyRendered: currentlyRendered + "?" + ".second", args: &args)
+                arg?.args.first?.renderArgInitElementToSwift(index: &index, currentlyRendered: currentlyRendered + "?" + ".first", args: &args, helpers: &helpers)
+                arg?.args.last?.renderArgInitElementToSwift(index: &index, currentlyRendered: currentlyRendered + "?" + ".second", args: &args, helpers: &helpers)
             } else if arg?.type == .or {
-                arg?.args.first?.renderArgInitElementToSwift(index: &index, currentlyRendered: currentlyRendered + "?" + ".left", args: &args)
-                arg?.args.last?.renderArgInitElementToSwift(index: &index, currentlyRendered: currentlyRendered + "?" + ".right", args: &args)
+                arg?.args.first?.renderArgInitElementToSwift(index: &index, currentlyRendered: currentlyRendered + "?" + ".left", args: &args, helpers: &helpers)
+                arg?.args.last?.renderArgInitElementToSwift(index: &index, currentlyRendered: currentlyRendered + "?" + ".right", args: &args, helpers: &helpers)
             } else {
                 index += 1
                 let argName = name ?? "arg\(index)"
@@ -260,6 +272,17 @@ extension TezosElement {
             index += 1
             let argName = name ?? "arg\(index)"
             args.append("self.\(argName) = \(currentlyRendered).sorted()")
+        case .map:
+            index += 1
+            let argName = name ?? "arg\(index)"
+            if self.args.last?.isSimple ?? true {
+                args.append("self.\(argName) = \(currentlyRendered).pairs.reduce([:], { var mutable = $0; mutable[$1.first] = $1.second; return mutable })")
+            } else {
+                guard var value = self.args.last else { return }
+                value.name = argName
+                helpers.append(value)
+                args.append("self.\(argName) = \(currentlyRendered).pairs.reduce([:], { var mutable = $0; mutable[$1.first] = \(argName.capitalized)($1.second); return mutable })")
+            }
         default:
             index += 1
             let argName = name ?? "arg\(index)"
@@ -267,10 +290,11 @@ extension TezosElement {
         }
     }
 
-    public func renderArgsToSwift() -> [String] {
+    public func renderArgsToSwift() -> (args: [String], helpers: [TezosElement]) {
         var index = 0
         var args: [String] = []
-        renderArgInitElementToSwift(index: &index, currentlyRendered: "tezosElement", args: &args)
-        return args
+        var helpers: [TezosElement] = []
+        renderArgInitElementToSwift(index: &index, currentlyRendered: "tezosElement", args: &args, helpers: &helpers)
+        return (args: args, helpers: helpers)
     }
 }
