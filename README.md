@@ -30,7 +30,7 @@ $ tezosgen
 <details>
 <summary>Via <strong>CocoaPods</strong></summary>
 
-If you're using CocoaPods, you can simply add `pod 'TezosGen' ~> 1.1.0` to your `Podfile`.
+If you're using CocoaPods, you can simply add `pod 'TezosGen' ~> 1.1.1` to your `Podfile`.
 
 This will download the `tezosgen` binaries and dependencies in `Pods/` during your next `pod install` execution.
 
@@ -51,7 +51,7 @@ _Note: tezosgen isn't really a pod, as it's not a library your code will depend 
 Add this to your `Package.swift`:
 
 ```swift
-.package(url: "https://github.com/AckeeCZ/tezosgen.git", .upToNextMajor(from: "1.1.0")),
+.package(url: "https://github.com/AckeeCZ/tezosgen.git", .upToNextMajor(from: "1.1.1")),
 ```
 
 </details>
