@@ -18,6 +18,6 @@ Pod::Spec.new do |s|
     s.preserve_paths = '*'
     s.ios.deployment_target = "13.0"
     s.swift_version = "5.1"
-    s.dependency 'TezosSwift', '~> 1.1'
+    s.dependency 'TezosSwift', '~> 1.1.1'
   end
   
