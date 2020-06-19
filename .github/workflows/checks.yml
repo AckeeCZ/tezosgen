@@ -17,9 +17,11 @@ jobs:
     name: Changelog
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
       - name: Changelog Reminder
-        uses: peterjgrainger/action-changelog-reminder@v1
+        uses: peterjgrainger/action-changelog-reminder@v1.2.0
+        with:
+          changelog_regex: 'CHANGELOG.md'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   podspec:
