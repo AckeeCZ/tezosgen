@@ -1,6 +1,6 @@
-# tezosgen
+![ackee|tezosgen](Resources/cover-image.png)
 
-[![CI Status](http://img.shields.io/travis/AckeeCZ/tezosgen.svg?style=flat)](https://travis-ci.com/AckeeCZ/tezosgen)
+![Tests](https://github.com/AckeeCZ/tezosgen/workflows/Tests/badge.svg)
 [![Version](https://img.shields.io/cocoapods/v/TezosGen.svg?style=flat)](http://cocoapods.org/pods/TezosGen)
 [![License](https://img.shields.io/cocoapods/l/TezosGen.svg?style=flat)](http://cocoapods.org/pods/TezosGen)
 [![Swift Package Manager compatible](https://img.shields.io/badge/SPM-compatible-brightgreen.svg?style=flat&colorA=28a745&&colorB=4E4E4E)](https://github.com/apple/swift-package-manager)
